@@ -18,7 +18,7 @@ import yaml
 
 def load_catalog() -> dict:
     """Load the dashboard catalog YAML file."""
-    catalog_path = Path(__file__).parent.parent.parent / "dashboard_catalog.yaml"
+    catalog_path = Path(__file__).parent.parent / "dashboard_catalog.yaml"
     with open(catalog_path, "r") as f:
         return yaml.safe_load(f)
 
