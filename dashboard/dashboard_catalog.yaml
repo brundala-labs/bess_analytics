@@ -8,7 +8,7 @@ dashboards:
   architecture_data_flow:
     title: "Architecture And Data Flow"
     pack: "Overview"
-    page_file: "01_Overview_-_Architecture_And_Data_Flow.py"
+    page_file: "01_Architecture_And_Data_Flow.py"
     personas:
       - "CEO"
       - "CTO"
@@ -43,7 +43,7 @@ dashboards:
   proposal_executive_summary:
     title: "Proposal Executive Summary"
     pack: "Overview"
-    page_file: "02_Overview_-_Proposal_Executive_Summary.py"
+    page_file: "02_Proposal_Executive_Summary.py"
     personas:
       - "CEO"
       - "CFO"
@@ -81,7 +81,7 @@ dashboards:
   enka_portfolio_executive:
     title: "Portfolio Executive Cockpit"
     pack: "ENKA"
-    page_file: "03_ENKA_-_Portfolio_Executive_Cockpit.py"
+    page_file: "03_Portfolio_Executive_Cockpit.py"
     personas:
       - "CEO"
       - "CFO"
@@ -143,7 +143,7 @@ dashboards:
   enka_partner_monetization:
     title: "Partner Monetization And Revenue Share"
     pack: "ENKA"
-    page_file: "04_ENKA_-_Partner_Monetization_And_Revenue_Share.py"
+    page_file: "04_Partner_Monetization_And_Revenue_Share.py"
     personas:
       - "CFO"
       - "Finance Manager"
@@ -190,7 +190,7 @@ dashboards:
   enka_rtm_settlement:
     title: "RTM Settlement Reconciliation"
     pack: "ENKA"
-    page_file: "05_ENKA_-_RTM_Settlement_Reconciliation.py"
+    page_file: "05_RTM_Settlement_Reconciliation.py"
     personas:
       - "Finance Manager"
       - "Operations Manager"
@@ -240,7 +240,7 @@ dashboards:
   enka_lifecycle_augmentation:
     title: "Lifecycle And Augmentation Planning"
     pack: "ENKA"
-    page_file: "06_ENKA_-_Lifecycle_And_Augmentation_Planning.py"
+    page_file: "06_Lifecycle_And_Augmentation_Planning.py"
     personas:
       - "Asset Manager"
       - "Engineering Lead"
@@ -296,7 +296,7 @@ dashboards:
   enka_development_pipeline:
     title: "Development Pipeline Tracking"
     pack: "ENKA"
-    page_file: "07_ENKA_-_Development_Pipeline_Tracking.py"
+    page_file: "07_Development_Pipeline_Tracking.py"
     personas:
       - "CEO"
       - "Development Director"
@@ -344,7 +344,7 @@ dashboards:
   tmeic_realtime_ops:
     title: "PCS Controller Real Time Operations"
     pack: "TMEIC"
-    page_file: "08_TMEIC_-_PCS_Controller_Real_Time_Operations.py"
+    page_file: "08_PCS_Controller_Real_Time_Operations.py"
     personas:
       - "Control Room Operator"
       - "Site Manager"
@@ -400,7 +400,7 @@ dashboards:
   tmeic_controller_health:
     title: "Controller Health And Communications"
     pack: "TMEIC"
-    page_file: "09_TMEIC_-_Controller_Health_And_Communications.py"
+    page_file: "09_Controller_Health_And_Communications.py"
     personas:
       - "SCADA Engineer"
       - "IT/OT Manager"
@@ -449,7 +449,7 @@ dashboards:
   tmeic_faults_timeline:
     title: "Faults And Trips Timeline"
     pack: "TMEIC"
-    page_file: "10_TMEIC_-_Faults_And_Trips_Timeline.py"
+    page_file: "10_Faults_And_Trips_Timeline.py"
     personas:
       - "Operations Manager"
       - "Maintenance Engineer"
@@ -502,7 +502,7 @@ dashboards:
   tmeic_grid_code:
     title: "Grid Performance And Compliance"
     pack: "TMEIC"
-    page_file: "11_TMEIC_-_Grid_Performance_And_Compliance.py"
+    page_file: "11_Grid_Performance_And_Compliance.py"
     personas:
       - "Grid Compliance Officer"
       - "Operations Manager"
@@ -550,7 +550,7 @@ dashboards:
   tmeic_historian:
     title: "Historian Explorer"
     pack: "TMEIC"
-    page_file: "12_TMEIC_-_Historian_Explorer.py"
+    page_file: "12_Historian_Explorer.py"
     personas:
       - "Data Analyst"
       - "Engineering Lead"
@@ -607,7 +607,7 @@ dashboards:
   combined_revenue_loss:
     title: "Revenue Loss Attribution"
     pack: "Combined"
-    page_file: "13_Combined_-_Revenue_Loss_Attribution.py"
+    page_file: "13_Revenue_Loss_Attribution.py"
     personas:
       - "CFO"
       - "Operations Manager"
@@ -661,7 +661,7 @@ dashboards:
   combined_dispatch_stress:
     title: "Dispatch Versus Asset Stress"
     pack: "Combined"
-    page_file: "14_Combined_-_Dispatch_Versus_Asset_Stress.py"
+    page_file: "14_Dispatch_Versus_Asset_Stress.py"
     personas:
       - "Asset Manager"
       - "Trading Desk"
@@ -717,7 +717,7 @@ dashboards:
   combined_sla_warranty:
     title: "SLA And Warranty Evidence Pack"
     pack: "Combined"
-    page_file: "15_Combined_-_SLA_And_Warranty_Evidence_Pack.py"
+    page_file: "15_SLA_And_Warranty_Evidence_Pack.py"
     personas:
       - "Asset Manager"
       - "Legal/Contracts"
@@ -777,7 +777,7 @@ dashboards:
   combined_vendor_benchmarking:
     title: "Portfolio Benchmarking By Vendor And Site"
     pack: "Combined"
-    page_file: "16_Combined_-_Portfolio_Benchmarking_By_Vendor_And_Site.py"
+    page_file: "16_Portfolio_Benchmarking_By_Vendor_And_Site.py"
     personas:
       - "CEO"
       - "Procurement"

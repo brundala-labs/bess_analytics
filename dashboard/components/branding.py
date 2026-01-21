@@ -69,25 +69,7 @@ def apply_enka_theme():
             --enka-light-gray: {ENKA_LIGHT_GRAY};
         }}
 
-        /* Sidebar styling */
-        [data-testid="stSidebar"] {{
-            background-color: {ENKA_DARK};
-        }}
-
-        [data-testid="stSidebar"] [data-testid="stMarkdown"] {{
-            color: {ENKA_WHITE};
-        }}
-
-        [data-testid="stSidebar"] .stSelectbox label,
-        [data-testid="stSidebar"] .stMultiSelect label {{
-            color: {ENKA_WHITE} !important;
-        }}
-
-        /* Sidebar navigation links */
-        [data-testid="stSidebarNav"] a {{
-            color: {ENKA_WHITE} !important;
-        }}
-
+        /* Sidebar styling - light theme */
         [data-testid="stSidebarNav"] a:hover {{
             color: {ENKA_GREEN} !important;
             background-color: rgba(129, 215, 66, 0.1);
@@ -96,6 +78,7 @@ def apply_enka_theme():
         [data-testid="stSidebarNav"] a[aria-selected="true"] {{
             background-color: rgba(129, 215, 66, 0.2);
             color: {ENKA_GREEN} !important;
+            font-weight: 600;
         }}
 
         /* Header styling */
@@ -221,26 +204,9 @@ def apply_enka_theme():
 
 
 def render_sidebar_branding():
-    """Render ENKA branding in sidebar with logo and tagline."""
-    assets_dir = Path(__file__).parent.parent / "assets"
-    logo_path = assets_dir / "enka_logo_white.png"
-
-    # Add spacing at top
-    st.sidebar.markdown("<br>", unsafe_allow_html=True)
-
-    # Logo
-    if logo_path.exists():
-        st.sidebar.image(str(logo_path), width=180)
-
-    # Tagline
-    st.sidebar.markdown(
-        f"""<p style="color: {ENKA_GREEN}; font-size: 0.85rem; margin-top: 0.5rem;">
-        Battery Energy Storage Analytics
-        </p>""",
-        unsafe_allow_html=True
-    )
-
-    st.sidebar.markdown("---")
+    """Render ENKA branding in sidebar (minimal version without logo)."""
+    # Simple tagline only - no logo
+    pass  # Logo removed per user request
 
 
 def render_footer():
