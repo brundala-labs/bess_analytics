@@ -33,9 +33,8 @@ env/
 *.swo
 *~
 
-# Data files (regenerate with python -m data_gen.generate)
-data/*.parquet
-data/*.duckdb
+# Data files - committed for easy deployment
+# To regenerate: python -m data_gen.generate
 
 # Logs
 *.log
