@@ -1,0 +1,624 @@
+# BESS Analytics Dashboard Catalog
+# This file defines all dashboard metadata including personas, decisions, data sources, freshness, and KPIs
+
+upstream_systems:
+  tmeic_controller:
+    name: "TMEIC Controller (PCS/Plant Control)"
+    description: "Primary telemetry and event source for controller/inverter data"
+  bms:
+    name: "BMS (Battery Management System)"
+    description: "Battery-level telemetry including SOC, SOH, temperature, voltage"
+  enka_ems:
+    name: "ENKA EMS/SCADA"
+    description: "Dispatch commands, setpoints, and site operational status"
+  rtm_settlement:
+    name: "RTM / Market Settlement Provider"
+    description: "Market settlement data, prices, and revenue allocation"
+  enka_cmms:
+    name: "ENKA CMMS"
+    description: "Maintenance tickets, work orders, and resolution tracking"
+  contracts_finance:
+    name: "Contracts & Finance"
+    description: "Partner revenue share agreements and SLA definitions"
+
+dashboards:
+  # ============== ENKA DASHBOARDS ==============
+  enka_portfolio_executive:
+    title: "Portfolio Executive Cockpit"
+    pack: "ENKA"
+    route: "1_enka_portfolio_executive"
+    personas:
+      - "CEO"
+      - "CFO"
+      - "Head of Asset Management"
+      - "Investor Relations"
+    decisions:
+      - "Allocate capex for augmentation or new builds"
+      - "Prioritize interventions for underperforming sites"
+      - "Assess portfolio-level risk exposure"
+      - "Track progress vs. annual revenue/availability targets"
+    data_sources:
+      - system: "Contracts & Finance"
+        tables: ["dim_partner", "dim_sla"]
+        notes: "Partner terms and SLA thresholds"
+      - system: "RTM / Market Settlement Provider"
+        tables: ["fact_settlement"]
+        notes: "Daily/monthly revenue by site and service"
+      - system: "ENKA EMS/SCADA"
+        tables: ["fact_dispatch"]
+        notes: "Dispatch commands and actual delivery"
+      - system: "TMEIC Controller (PCS/Plant Control)"
+        tables: ["fact_telemetry", "fact_events"]
+        notes: "Power output, status, and fault events"
+      - system: "BMS (Battery Management System)"
+        tables: ["fact_telemetry"]
+        notes: "SOH trends and temperature for degradation"
+    freshness: "Daily for financial rollups; 1-5 min for availability metrics"
+    kpis:
+      - label: "Portfolio Revenue MTD"
+        metric: "portfolio_revenue_mtd_gbp"
+        format: "currency"
+      - label: "Avg Availability"
+        metric: "portfolio_availability_pct"
+        format: "percent"
+      - label: "Total Energy Dispatched"
+        metric: "total_energy_mwh"
+        format: "number"
+      - label: "Active Faults"
+        metric: "active_fault_count"
+        format: "integer"
+      - label: "Sites Below Target"
+        metric: "sites_below_target"
+        format: "integer"
+      - label: "Avg SOH"
+        metric: "avg_soh_pct"
+        format: "percent"
+
+  enka_partner_monetization:
+    title: "Partner Monetization & Revenue Share"
+    pack: "ENKA"
+    route: "2_enka_partner_monetization"
+    personas:
+      - "Partnerships Manager"
+      - "CFO"
+      - "Partner Site Owner"
+    decisions:
+      - "Calculate and validate partner payouts"
+      - "Resolve disputes over availability or performance"
+      - "Communicate SLA performance to partners"
+      - "Prepare for contract renewals or renegotiations"
+    data_sources:
+      - system: "Contracts & Finance"
+        tables: ["dim_partner", "dim_sla"]
+        notes: "Revenue share percentages and SLA terms"
+      - system: "RTM / Market Settlement Provider"
+        tables: ["fact_settlement"]
+        notes: "Gross revenue for share calculations"
+      - system: "TMEIC Controller (PCS/Plant Control)"
+        tables: ["fact_events"]
+        notes: "Downtime events affecting partner revenue"
+      - system: "ENKA EMS/SCADA"
+        tables: ["fact_dispatch"]
+        notes: "Dispatch performance for SLA validation"
+    freshness: "Monthly statements; daily for interim visibility"
+    kpis:
+      - label: "Partner Revenue Share MTD"
+        metric: "partner_revenue_share_mtd"
+        format: "currency"
+      - label: "SLA Compliance Rate"
+        metric: "sla_compliance_pct"
+        format: "percent"
+      - label: "Pending Disputes"
+        metric: "pending_disputes"
+        format: "integer"
+      - label: "Partner Count"
+        metric: "partner_count"
+        format: "integer"
+      - label: "Avg Revenue Share %"
+        metric: "avg_revenue_share_pct"
+        format: "percent"
+      - label: "YTD Partner Payouts"
+        metric: "ytd_partner_payouts"
+        format: "currency"
+
+  enka_rtm_settlement:
+    title: "RTM/Market Settlement Reconciliation"
+    pack: "ENKA"
+    route: "3_enka_rtm_settlement"
+    personas:
+      - "Commercial Ops"
+      - "Finance Analyst"
+    decisions:
+      - "Identify and dispute incorrect settlements"
+      - "Verify payments match expected revenue"
+      - "Detect missing intervals or data gaps"
+      - "Reconcile dispatch vs. metered energy"
+    data_sources:
+      - system: "RTM / Market Settlement Provider"
+        tables: ["fact_settlement"]
+        notes: "Settlement amounts and prices by interval"
+      - system: "ENKA EMS/SCADA"
+        tables: ["fact_dispatch"]
+        notes: "Commanded vs. actual dispatch for variance"
+      - system: "TMEIC Controller (PCS/Plant Control)"
+        tables: ["fact_data_quality"]
+        notes: "Data completeness affecting settlement accuracy"
+    freshness: "Daily batch; T+1 for preliminary, T+5 for final"
+    kpis:
+      - label: "Settled Revenue MTD"
+        metric: "settled_revenue_mtd"
+        format: "currency"
+      - label: "Unreconciled Amount"
+        metric: "unreconciled_amount"
+        format: "currency"
+      - label: "Missing Intervals"
+        metric: "missing_intervals_count"
+        format: "integer"
+      - label: "Dispatch Accuracy"
+        metric: "dispatch_accuracy_pct"
+        format: "percent"
+      - label: "Avg Price £/MWh"
+        metric: "avg_price_gbp_mwh"
+        format: "currency"
+      - label: "Open Disputes"
+        metric: "open_settlement_disputes"
+        format: "integer"
+
+  enka_lifecycle_augmentation:
+    title: "Lifecycle & Augmentation Planning"
+    pack: "ENKA"
+    route: "4_enka_lifecycle_augmentation"
+    personas:
+      - "Asset Manager"
+      - "Engineering Lead"
+    decisions:
+      - "Schedule battery augmentation timing"
+      - "File warranty claims for premature degradation"
+      - "Adjust operating envelope to extend life"
+      - "Plan capex for fleet-wide replacements"
+    data_sources:
+      - system: "BMS (Battery Management System)"
+        tables: ["fact_telemetry"]
+        notes: "SOH, SOC, temperature, current, cycle counts"
+      - system: "TMEIC Controller (PCS/Plant Control)"
+        tables: ["fact_telemetry"]
+        notes: "Power cycling patterns and efficiency trends"
+      - system: "ENKA CMMS"
+        tables: ["fact_maintenance"]
+        notes: "Historical repairs and component replacements"
+    freshness: "Weekly analytics; daily telemetry for trend updates"
+    kpis:
+      - label: "Fleet Avg SOH"
+        metric: "fleet_avg_soh"
+        format: "percent"
+      - label: "Sites Needing Augmentation"
+        metric: "sites_augmentation_needed"
+        format: "integer"
+      - label: "Avg Cycle Count"
+        metric: "avg_cycle_count"
+        format: "number"
+      - label: "Warranty Claims Open"
+        metric: "warranty_claims_open"
+        format: "integer"
+      - label: "Projected Augmentation Cost"
+        metric: "projected_augmentation_cost"
+        format: "currency"
+      - label: "Remaining Useful Life (avg)"
+        metric: "avg_remaining_useful_life_years"
+        format: "number"
+
+  enka_development_pipeline:
+    title: "Development Pipeline & Deployment Tracking"
+    pack: "ENKA"
+    route: "5_enka_development_pipeline"
+    personas:
+      - "PMO"
+      - "Development Lead"
+    decisions:
+      - "Unblock delayed projects"
+      - "Coordinate vendor scheduling"
+      - "Forecast capacity coming online"
+      - "Reallocate resources between projects"
+    data_sources:
+      - system: "Project Pipeline (Internal)"
+        tables: ["projects_pipeline"]
+        notes: "Project stages, dates, and blockers"
+    freshness: "Weekly update from PMO"
+    kpis:
+      - label: "Projects In Flight"
+        metric: "projects_in_flight"
+        format: "integer"
+      - label: "MW Under Development"
+        metric: "mw_under_development"
+        format: "number"
+      - label: "On-Schedule Projects"
+        metric: "on_schedule_count"
+        format: "integer"
+      - label: "Delayed Projects"
+        metric: "delayed_projects"
+        format: "integer"
+      - label: "Next 8-Month Capacity (MW)"
+        metric: "next_8month_capacity_mw"
+        format: "number"
+      - label: "Total Pipeline Value"
+        metric: "pipeline_value_gbp"
+        format: "currency"
+
+  # ============== TMEIC DASHBOARDS ==============
+  tmeic_realtime_ops:
+    title: "PCS/Controller Real-time Ops"
+    pack: "TMEIC"
+    route: "6_tmeic_realtime_ops"
+    personas:
+      - "Control Room Operator"
+      - "Site Engineer"
+    decisions:
+      - "Verify safe dispatch conditions"
+      - "Identify abnormal operating states"
+      - "Trigger immediate interventions"
+      - "Coordinate with grid operator on constraints"
+    data_sources:
+      - system: "TMEIC Controller (PCS/Plant Control)"
+        tables: ["fact_telemetry", "fact_events"]
+        notes: "Real-time power, status, and active alarms"
+      - system: "ENKA EMS/SCADA"
+        tables: ["fact_dispatch"]
+        notes: "Current dispatch setpoint and mode"
+    freshness: "Real-time (1 minute refresh)"
+    kpis:
+      - label: "Current Power (MW)"
+        metric: "current_power_mw"
+        format: "number"
+      - label: "Grid Frequency (Hz)"
+        metric: "current_frequency_hz"
+        format: "number"
+      - label: "Avg SOC"
+        metric: "current_soc_pct"
+        format: "percent"
+      - label: "Active Alarms"
+        metric: "active_alarm_count"
+        format: "integer"
+      - label: "Controller Status"
+        metric: "controller_status"
+        format: "text"
+      - label: "Dispatch Compliance"
+        metric: "dispatch_compliance_pct"
+        format: "percent"
+
+  tmeic_controller_health:
+    title: "Controller Health & Comms"
+    pack: "TMEIC"
+    route: "7_tmeic_controller_health"
+    personas:
+      - "OT/SCADA Engineer"
+    decisions:
+      - "Address communication issues"
+      - "Improve telemetry completeness"
+      - "Prevent blind operation periods"
+      - "Upgrade firmware or network infrastructure"
+    data_sources:
+      - system: "TMEIC Controller (PCS/Plant Control)"
+        tables: ["fact_telemetry", "fact_events"]
+        notes: "Comms latency, drop rate, controller heartbeat"
+      - system: "TMEIC Controller (PCS/Plant Control)"
+        tables: ["fact_data_quality"]
+        notes: "Hourly completeness metrics"
+    freshness: "Real-time (1-5 min) for alerts; hourly for trends"
+    kpis:
+      - label: "Comms Uptime"
+        metric: "comms_uptime_pct"
+        format: "percent"
+      - label: "Avg Latency (ms)"
+        metric: "avg_comms_latency_ms"
+        format: "number"
+      - label: "Data Completeness"
+        metric: "data_completeness_pct"
+        format: "percent"
+      - label: "Comms Drops (24h)"
+        metric: "comms_drops_24h"
+        format: "integer"
+      - label: "Sites with Issues"
+        metric: "sites_comms_issues"
+        format: "integer"
+      - label: "Missing Tags Count"
+        metric: "missing_tags_count"
+        format: "integer"
+
+  tmeic_faults_timeline:
+    title: "Faults/Trips Timeline"
+    pack: "TMEIC"
+    route: "8_tmeic_faults_timeline"
+    personas:
+      - "Maintenance Lead"
+      - "Reliability Engineer"
+    decisions:
+      - "Identify root cause of faults"
+      - "Reduce Mean Time to Repair (MTTR)"
+      - "Prioritize corrective maintenance"
+      - "Escalate recurring issues to OEM"
+    data_sources:
+      - system: "TMEIC Controller (PCS/Plant Control)"
+        tables: ["fact_events"]
+        notes: "Fault codes, trip events, and severity"
+      - system: "ENKA CMMS"
+        tables: ["fact_maintenance"]
+        notes: "Linked maintenance tickets and resolution"
+      - system: "TMEIC Controller (PCS/Plant Control)"
+        tables: ["fact_telemetry"]
+        notes: "Telemetry context around fault time"
+    freshness: "Near real-time for new faults; batch for analytics"
+    kpis:
+      - label: "Active Faults"
+        metric: "active_faults"
+        format: "integer"
+      - label: "Faults (7 days)"
+        metric: "faults_7d"
+        format: "integer"
+      - label: "Avg MTTR (hrs)"
+        metric: "avg_mttr_hours"
+        format: "number"
+      - label: "Top Fault Code"
+        metric: "top_fault_code"
+        format: "text"
+      - label: "Trips (30 days)"
+        metric: "trips_30d"
+        format: "integer"
+      - label: "Repeat Fault Rate"
+        metric: "repeat_fault_rate_pct"
+        format: "percent"
+
+  tmeic_grid_code:
+    title: "Grid Code Performance"
+    pack: "TMEIC"
+    route: "9_tmeic_grid_code"
+    personas:
+      - "Grid Compliance Engineer"
+    decisions:
+      - "Validate ramp-rate compliance"
+      - "Verify frequency response performance"
+      - "Prepare compliance reports for regulator"
+      - "Tune controller parameters"
+    data_sources:
+      - system: "TMEIC Controller (PCS/Plant Control)"
+        tables: ["fact_telemetry"]
+        notes: "P, Q, V, F at 1-min resolution"
+      - system: "ENKA EMS/SCADA"
+        tables: ["fact_dispatch"]
+        notes: "Dispatch commands for response validation"
+    freshness: "Daily analytics; event-triggered for excursions"
+    kpis:
+      - label: "Ramp Compliance"
+        metric: "ramp_compliance_pct"
+        format: "percent"
+      - label: "Frequency Response Time"
+        metric: "avg_freq_response_sec"
+        format: "number"
+      - label: "Voltage Excursions"
+        metric: "voltage_excursions_count"
+        format: "integer"
+      - label: "Power Factor Avg"
+        metric: "avg_power_factor"
+        format: "number"
+      - label: "Grid Code Score"
+        metric: "grid_code_score"
+        format: "percent"
+      - label: "Non-Compliance Events"
+        metric: "non_compliance_events"
+        format: "integer"
+
+  tmeic_historian:
+    title: "Historian Explorer"
+    pack: "TMEIC"
+    route: "10_tmeic_historian"
+    personas:
+      - "Engineer (L3 Support)"
+    decisions:
+      - "Deep troubleshooting of incidents"
+      - "Prepare OEM support packets"
+      - "Validate telemetry quality"
+      - "Export data for offline analysis"
+    data_sources:
+      - system: "TMEIC Controller (PCS/Plant Control)"
+        tables: ["fact_telemetry"]
+        notes: "Full tag library at 1-min resolution"
+      - system: "TMEIC Controller (PCS/Plant Control)"
+        tables: ["fact_events"]
+        notes: "Event log with timestamps"
+    freshness: "On-demand; historical data available"
+    kpis:
+      - label: "Tags Available"
+        metric: "total_tags_count"
+        format: "integer"
+      - label: "Data Points (Selected)"
+        metric: "selected_data_points"
+        format: "number"
+      - label: "Date Range"
+        metric: "data_date_range"
+        format: "text"
+      - label: "Export Status"
+        metric: "export_status"
+        format: "text"
+
+  # ============== COMBINED DASHBOARDS ==============
+  combined_revenue_loss:
+    title: "Revenue Loss Attribution"
+    pack: "Combined"
+    route: "11_combined_revenue_loss"
+    personas:
+      - "CFO"
+      - "Head of Ops"
+      - "Commercial Ops"
+    decisions:
+      - "Fix biggest revenue leaks first"
+      - "Hold vendors accountable for downtime"
+      - "Quantify impact of operational issues"
+      - "Prioritize reliability investments"
+    data_sources:
+      - system: "RTM / Market Settlement Provider"
+        tables: ["fact_settlement"]
+        notes: "Actual vs. expected revenue"
+      - system: "ENKA EMS/SCADA"
+        tables: ["fact_dispatch"]
+        notes: "Dispatch curtailments and constraints"
+      - system: "TMEIC Controller (PCS/Plant Control)"
+        tables: ["fact_events"]
+        notes: "Downtime causing revenue loss"
+      - system: "TMEIC Controller (PCS/Plant Control)"
+        tables: ["fact_data_quality"]
+        notes: "Data gaps affecting settlements"
+    freshness: "Daily batch; T+1 preliminary"
+    kpis:
+      - label: "Total Revenue Loss MTD"
+        metric: "revenue_loss_mtd"
+        format: "currency"
+      - label: "Loss from Faults"
+        metric: "loss_from_faults"
+        format: "currency"
+      - label: "Loss from Curtailment"
+        metric: "loss_from_curtailment"
+        format: "currency"
+      - label: "Loss from Data Gaps"
+        metric: "loss_from_data_gaps"
+        format: "currency"
+      - label: "Recovery Rate"
+        metric: "revenue_recovery_rate"
+        format: "percent"
+      - label: "Top Loss Site"
+        metric: "top_loss_site"
+        format: "text"
+
+  combined_dispatch_stress:
+    title: "Dispatch vs Asset Stress"
+    pack: "Combined"
+    route: "12_combined_dispatch_stress"
+    personas:
+      - "Asset Manager"
+      - "Trading/Commercial Lead"
+    decisions:
+      - "Balance profit vs. degradation"
+      - "Adjust dispatch strategy for battery health"
+      - "Set operating limits by asset condition"
+      - "Optimize for total cost of ownership"
+    data_sources:
+      - system: "ENKA EMS/SCADA"
+        tables: ["fact_dispatch"]
+        notes: "Dispatch intensity and cycling patterns"
+      - system: "RTM / Market Settlement Provider"
+        tables: ["fact_settlement"]
+        notes: "Revenue from dispatch"
+      - system: "BMS (Battery Management System)"
+        tables: ["fact_telemetry"]
+        notes: "Temperature, current, cycles, SOH impact"
+      - system: "TMEIC Controller (PCS/Plant Control)"
+        tables: ["fact_telemetry"]
+        notes: "Power and efficiency during dispatch"
+    freshness: "Daily analytics; near real-time telemetry"
+    kpis:
+      - label: "Dispatch Intensity Score"
+        metric: "dispatch_intensity_score"
+        format: "number"
+      - label: "Degradation Rate (%/month)"
+        metric: "degradation_rate_pct_month"
+        format: "percent"
+      - label: "Revenue per Cycle"
+        metric: "revenue_per_cycle"
+        format: "currency"
+      - label: "Thermal Stress Events"
+        metric: "thermal_stress_events"
+        format: "integer"
+      - label: "Optimal Dispatch Score"
+        metric: "optimal_dispatch_score"
+        format: "percent"
+      - label: "Cycles This Month"
+        metric: "cycles_this_month"
+        format: "number"
+
+  combined_sla_warranty:
+    title: "SLA & Warranty Evidence Pack"
+    pack: "Combined"
+    route: "13_combined_sla_warranty"
+    personas:
+      - "Legal/Contracts"
+      - "Asset Manager"
+    decisions:
+      - "Trigger warranty or SLA claims"
+      - "Document compliance evidence"
+      - "Prepare dispute packages"
+      - "Negotiate contract amendments"
+    data_sources:
+      - system: "Contracts & Finance"
+        tables: ["dim_sla", "dim_partner"]
+        notes: "SLA thresholds and warranty terms"
+      - system: "TMEIC Controller (PCS/Plant Control)"
+        tables: ["fact_events"]
+        notes: "Events causing SLA breaches"
+      - system: "TMEIC Controller (PCS/Plant Control)"
+        tables: ["fact_telemetry"]
+        notes: "Operating excursions for warranty evidence"
+    freshness: "Weekly/monthly reports; real-time excursion alerts"
+    kpis:
+      - label: "SLA Breaches MTD"
+        metric: "sla_breaches_mtd"
+        format: "integer"
+      - label: "Penalty Exposure"
+        metric: "penalty_exposure_gbp"
+        format: "currency"
+      - label: "Warranty Claims Pending"
+        metric: "warranty_claims_pending"
+        format: "integer"
+      - label: "Evidence Packets Ready"
+        metric: "evidence_packets_ready"
+        format: "integer"
+      - label: "Compliance Score"
+        metric: "sla_compliance_score"
+        format: "percent"
+      - label: "Days Since Last Breach"
+        metric: "days_since_breach"
+        format: "integer"
+
+  combined_vendor_benchmarking:
+    title: "Portfolio Benchmarking by Vendor"
+    pack: "Combined"
+    route: "14_combined_vendor_benchmarking"
+    personas:
+      - "COO"
+      - "Engineering"
+      - "Procurement"
+    decisions:
+      - "Select preferred vendor for new builds"
+      - "Define standardization roadmap"
+      - "Negotiate volume discounts"
+      - "Set vendor performance expectations"
+    data_sources:
+      - system: "Contracts & Finance"
+        tables: ["dim_site"]
+        notes: "Vendor controller assignment per site"
+      - system: "TMEIC Controller (PCS/Plant Control)"
+        tables: ["fact_telemetry"]
+        notes: "Performance metrics by vendor"
+      - system: "TMEIC Controller (PCS/Plant Control)"
+        tables: ["fact_events"]
+        notes: "Reliability comparison by vendor"
+      - system: "RTM / Market Settlement Provider"
+        tables: ["fact_settlement"]
+        notes: "Revenue performance by vendor"
+    freshness: "Weekly/monthly analytics"
+    kpis:
+      - label: "Vendors Compared"
+        metric: "vendor_count"
+        format: "integer"
+      - label: "Best Availability"
+        metric: "best_vendor_availability"
+        format: "text"
+      - label: "Best Revenue/MW"
+        metric: "best_vendor_revenue_mw"
+        format: "text"
+      - label: "Lowest Fault Rate"
+        metric: "lowest_fault_rate_vendor"
+        format: "text"
+      - label: "Avg Efficiency Gap"
+        metric: "efficiency_gap_pct"
+        format: "percent"
+      - label: "Recommended Vendor"
+        metric: "recommended_vendor"
+        format: "text"
