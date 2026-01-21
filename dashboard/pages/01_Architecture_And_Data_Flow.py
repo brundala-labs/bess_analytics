@@ -6,7 +6,7 @@ Cloud architecture, Medallion data pipeline, and canonical data model documentat
 
 import sys
 from pathlib import Path
-import base64
+
 
 import streamlit as st
 
@@ -477,21 +477,6 @@ def main():
         freshness=config.get("freshness", ""),
         kpis=[],
     )
-
-    # Export and Preview buttons
-    html_content = generate_html_export()
-
-    col1, col2, col3 = st.columns([1, 1, 4])
-    with col1:
-        b64 = base64.b64encode(html_content.encode()).decode()
-        href = f'<a href="data:text/html;base64,{b64}" download="architecture_and_data_flow.html">📥 Download HTML</a>'
-        st.markdown(href, unsafe_allow_html=True)
-    with col2:
-        preview_clicked = st.button("👁️ Preview HTML")
-
-    if preview_clicked:
-        st.markdown("### HTML Preview")
-        st.components.v1.html(html_content, height=600, scrolling=True)
 
     st.divider()
 
