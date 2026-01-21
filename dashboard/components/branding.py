@@ -253,13 +253,15 @@ def render_sidebar_branding():
     for category, pages in dashboards.items():
         with st.sidebar.expander(f"{category} ({len(pages)})", expanded=False):
             for title, page_key in pages:
-                st.markdown(f"[{title}](./{page_key})")
+                if st.button(f"📊 {title}", key=f"nav_{page_key}", use_container_width=True):
+                    st.switch_page(f"pages/{page_key}.py")
 
     # Reference documents section
     st.sidebar.markdown("---")
     with st.sidebar.expander("Reference (2)", expanded=False):
         for title, page_key in reference_docs:
-            st.markdown(f"[📄 {title}](./{page_key})")
+            if st.button(f"📄 {title}", key=f"nav_{page_key}", use_container_width=True):
+                st.switch_page(f"pages/{page_key}.py")
 
 
 def render_footer():
