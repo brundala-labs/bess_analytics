@@ -246,6 +246,14 @@ def render_sidebar_branding():
     # Home link
     st.sidebar.markdown(f"### [⚡ Home](./)")
 
+    # Reference documents section (at top)
+    st.sidebar.markdown("---")
+    with st.sidebar.expander("Reference (2)", expanded=False):
+        for title, page_key in reference_docs:
+            if st.button(f"📄 {title}", key=f"nav_{page_key}", use_container_width=True):
+                st.switch_page(f"pages/{page_key}.py")
+
+    # Dashboards section
     st.sidebar.markdown("---")
     st.sidebar.markdown("### Dashboards")
 
@@ -255,13 +263,6 @@ def render_sidebar_branding():
             for title, page_key in pages:
                 if st.button(f"📊 {title}", key=f"nav_{page_key}", use_container_width=True):
                     st.switch_page(f"pages/{page_key}.py")
-
-    # Reference documents section
-    st.sidebar.markdown("---")
-    with st.sidebar.expander("Reference (2)", expanded=False):
-        for title, page_key in reference_docs:
-            if st.button(f"📄 {title}", key=f"nav_{page_key}", use_container_width=True):
-                st.switch_page(f"pages/{page_key}.py")
 
 
 def render_footer():
