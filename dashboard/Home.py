@@ -71,17 +71,20 @@ def main():
 
     # Quick stats
     st.markdown("---")
-    col1, col2, col3, col4 = st.columns(4)
+    col1, col2, col3, col4, col5 = st.columns(5)
 
     with col1:
         st.metric("Total Dashboards", len(dashboards))
     with col2:
+        overview_count = sum(1 for d in dashboards.values() if d.get("pack") == "Overview")
+        st.metric("Overview", overview_count)
+    with col3:
         enka_count = sum(1 for d in dashboards.values() if d.get("pack") == "ENKA")
         st.metric("ENKA Dashboards", enka_count)
-    with col3:
+    with col4:
         tmeic_count = sum(1 for d in dashboards.values() if d.get("pack") == "TMEIC")
         st.metric("TMEIC Dashboards", tmeic_count)
-    with col4:
+    with col5:
         combined_count = sum(1 for d in dashboards.values() if d.get("pack") == "Combined")
         st.metric("Combined Dashboards", combined_count)
 
@@ -91,20 +94,22 @@ def main():
     st.subheader("Dashboard Catalog")
 
     # Organize by pack
-    packs = {"ENKA": [], "TMEIC": [], "Combined": []}
+    packs = {"Overview": [], "ENKA": [], "TMEIC": [], "Combined": []}
     for key, config in dashboards.items():
         pack = config.get("pack", "Other")
         if pack in packs:
             packs[pack].append((key, config))
 
     # Render each pack
-    tabs = st.tabs(["ENKA", "TMEIC", "Combined"])
+    tabs = st.tabs(["Overview", "ENKA", "TMEIC", "Combined"])
 
     for tab, (pack_name, pack_dashboards) in zip(tabs, packs.items()):
         with tab:
             st.markdown(f"### {pack_name} Dashboard Pack")
 
-            if pack_name == "ENKA":
+            if pack_name == "Overview":
+                st.info("System architecture, data flow documentation, and proposal executive summary.")
+            elif pack_name == "ENKA":
                 st.info("Asset Owner/Operator dashboards focused on portfolio management, revenue, and lifecycle planning.")
             elif pack_name == "TMEIC":
                 st.info("Controller/PCS dashboards for real-time operations, health monitoring, and grid compliance.")
