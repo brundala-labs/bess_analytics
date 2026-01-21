@@ -27,209 +27,18 @@ DASHBOARD_KEY = "architecture_data_flow"
 
 
 def get_architecture_diagram() -> str:
-    """Generate cloud architecture diagram using Mermaid syntax."""
-    return """
-```mermaid
-flowchart TB
-    subgraph Sources["Data Sources"]
-        TMEIC["TMEIC Controller<br/>(PCS/Plant Control)"]
-        BMS["BMS<br/>(Battery Management System)"]
-        EMS["ENKA EMS/SCADA"]
-        RTM["RTM / Market<br/>Settlement Provider"]
-        CMMS["ENKA CMMS"]
-        FINANCE["Contracts And Finance"]
-    end
-
-    subgraph Streaming["Streaming Bus"]
-        KAFKA["Kafka / Event Hubs /<br/>Kinesis / Pub/Sub"]
-    end
-
-    subgraph Cloud["Any Cloud Platform"]
-        subgraph Lake["Data Lake (S3/ADLS/GCS)"]
-            BRONZE["Bronze Layer<br/>(Raw Events)"]
-            SILVER["Silver Layer<br/>(Cleaned/Conformed)"]
-            GOLD["Gold Layer<br/>(KPI Tables)"]
-        end
-
-        subgraph Compute["Databricks"]
-            STREAM["Structured Streaming"]
-            DELTA["Delta Lake"]
-            UNITY["Unity Catalog<br/>(Governance)"]
-        end
-    end
-
-    subgraph Serving["Analytics Serving"]
-        API["FastAPI<br/>Metrics Service"]
-        BI["Streamlit /<br/>Power BI / Tableau"]
-    end
-
-    TMEIC --> KAFKA
-    BMS --> KAFKA
-    EMS --> KAFKA
-    RTM --> |Batch| BRONZE
-    CMMS --> |Batch| BRONZE
-    FINANCE --> |Batch| BRONZE
-
-    KAFKA --> STREAM
-    STREAM --> BRONZE
-    BRONZE --> DELTA
-    DELTA --> SILVER
-    SILVER --> DELTA
-    DELTA --> GOLD
-
-    GOLD --> API
-    API --> BI
-
-    UNITY -.-> BRONZE
-    UNITY -.-> SILVER
-    UNITY -.-> GOLD
-```
-"""
+    """Generate cloud architecture description."""
+    return ""
 
 
 def get_medallion_diagram() -> str:
-    """Generate Medallion Architecture diagram."""
-    return """
-```mermaid
-flowchart LR
-    subgraph Bronze["Bronze Layer (Raw)"]
-        B1["telemetry_raw.jsonl<br/>- As-received from sensors<br/>- Minimal parsing<br/>- Append-only"]
-        B2["events_raw.jsonl<br/>- Controller events<br/>- Fault codes<br/>- Timestamps as-is"]
-        B3["settlement_raw.csv<br/>- Daily settlement files<br/>- Partner data<br/>- Contract terms"]
-    end
-
-    subgraph Silver["Silver Layer (Cleaned)"]
-        S1["fact_telemetry<br/>- Canonical schema<br/>- Deduplicated<br/>- Time-aligned"]
-        S2["fact_events<br/>- Normalized codes<br/>- Duration calculated<br/>- Linked to assets"]
-        S3["fact_settlement<br/>- Validated revenues<br/>- Service mapping<br/>- Partner joins"]
-        S4["dim_site / dim_asset<br/>- Master data<br/>- Slowly changing"]
-    end
-
-    subgraph Gold["Gold Layer (Curated)"]
-        G1["agg_telemetry_15min<br/>- Downsampled metrics<br/>- Derived KPIs"]
-        G2["agg_site_daily<br/>- Daily rollups<br/>- Availability, DoD"]
-        G3["agg_revenue_daily<br/>- Revenue attribution<br/>- Loss analysis"]
-        G4["v_sla_compliance<br/>- SLA status<br/>- Penalty exposure"]
-    end
-
-    B1 --> S1
-    B2 --> S2
-    B3 --> S3
-    S1 --> G1
-    S1 --> G2
-    S2 --> G2
-    S3 --> G3
-    S4 --> G4
-```
-"""
+    """Generate Medallion Architecture description."""
+    return ""
 
 
 def get_data_model_diagram() -> str:
-    """Generate canonical data model diagram."""
-    return """
-```mermaid
-erDiagram
-    dim_site {
-        string site_id PK
-        string name
-        string country
-        float grid_connection_mw
-        float bess_mw
-        float bess_mwh
-        date cod_date
-        string vendor_controller
-    }
-
-    dim_asset {
-        string asset_id PK
-        string site_id FK
-        string asset_type
-        string make
-        string model
-    }
-
-    dim_service {
-        string service_id PK
-        string name
-        string market
-    }
-
-    dim_partner {
-        string partner_id PK
-        string site_id FK
-        string name
-        float revenue_share_pct
-    }
-
-    dim_sla {
-        string sla_id PK
-        string site_id FK
-        string metric_name
-        float threshold
-        float penalty_rate_per_hour
-    }
-
-    fact_telemetry {
-        timestamp ts
-        string site_id FK
-        string asset_id FK
-        string tag
-        float value
-    }
-
-    fact_dispatch {
-        timestamp ts
-        string site_id FK
-        string service_id FK
-        float command_kw
-        float actual_kw
-    }
-
-    fact_events {
-        string event_id PK
-        string site_id FK
-        string asset_id FK
-        timestamp start_ts
-        timestamp end_ts
-        string severity
-        string event_type
-        string code
-        string description
-    }
-
-    fact_settlement {
-        date date
-        string site_id FK
-        string service_id FK
-        float revenue_gbp
-        float energy_mwh
-        float avg_price_gbp_per_mwh
-    }
-
-    fact_maintenance {
-        string ticket_id PK
-        string site_id FK
-        string asset_id FK
-        timestamp opened_ts
-        timestamp closed_ts
-        string issue_category
-        string resolution
-        float cost_gbp
-    }
-
-    dim_site ||--o{ dim_asset : contains
-    dim_site ||--o{ dim_partner : has
-    dim_site ||--o{ dim_sla : governed_by
-    dim_site ||--o{ fact_telemetry : generates
-    dim_site ||--o{ fact_dispatch : receives
-    dim_site ||--o{ fact_events : logs
-    dim_site ||--o{ fact_settlement : earns
-    dim_asset ||--o{ fact_telemetry : reports
-    dim_asset ||--o{ fact_events : triggers
-    dim_service ||--o{ fact_dispatch : commands
-    dim_service ||--o{ fact_settlement : revenues
-```
-"""
+    """Generate canonical data model description."""
+    return ""
 
 
 def generate_html_export() -> str:
@@ -494,8 +303,6 @@ def main():
     - **Serving**: FastAPI metrics service + Streamlit dashboards
     """)
 
-    st.markdown(get_architecture_diagram())
-
     st.divider()
 
     # Section 2: Medallion Architecture
@@ -510,54 +317,39 @@ def main():
     | **Gold** | Analytics-ready | KPI tables, rollups, dashboard views |
     """)
 
-    st.markdown(get_medallion_diagram())
-
     # Bronze/Silver/Gold table mapping
     with st.expander("📋 Table Mapping Details"):
         col1, col2, col3 = st.columns(3)
 
         with col1:
             st.markdown("**Bronze (Raw)**")
-            st.code("""
-/data/bronze/
-├── telemetry/
-│   ├── site001_2024031512.jsonl
-│   └── site002_2024031512.jsonl
-├── events/
-│   └── events_raw.jsonl
-└── settlement/
-    └── settlement_2024.csv
+            st.markdown("""
+- telemetry/ (JSONL per site/hour)
+- events/ (JSONL daily)
+- settlement/ (CSV monthly)
             """)
 
         with col2:
             st.markdown("**Silver (Cleaned)**")
-            st.code("""
-fact_telemetry
-fact_dispatch
-fact_events
-fact_settlement
-fact_maintenance
-fact_data_quality
-dim_site
-dim_asset
-dim_service
-dim_partner
-dim_sla
+            st.markdown("""
+- fact_telemetry
+- fact_dispatch
+- fact_events
+- fact_settlement
+- fact_maintenance
+- fact_data_quality
+- dim_site, dim_asset
+- dim_service, dim_partner, dim_sla
             """)
 
         with col3:
             st.markdown("**Gold (Curated)**")
-            st.code("""
-agg_telemetry_15min
-agg_site_daily
-agg_site_monthly
-agg_events_daily
-agg_revenue_daily
-v_battery_health
-v_site_availability
-v_sla_compliance
-v_dispatch_compliance
-v_revenue_loss_attribution
+            st.markdown("""
+- agg_telemetry_15min
+- agg_site_daily
+- agg_site_monthly
+- agg_events_daily
+- agg_revenue_daily
             """)
 
     st.divider()
@@ -570,8 +362,6 @@ v_revenue_loss_attribution
     - **Facts**: Telemetry, Dispatch, Events, Settlement, Maintenance
     - **Derived KPIs**: Availability, RTE, DoD, Lost Revenue, etc.
     """)
-
-    st.markdown(get_data_model_diagram())
 
     st.divider()
 
