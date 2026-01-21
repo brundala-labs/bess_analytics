@@ -251,15 +251,15 @@ def render_sidebar_branding():
 
     # Render each category as expander
     for category, pages in dashboards.items():
-        with st.sidebar.expander(f"**{category}** ({len(pages)})", expanded=False):
+        with st.sidebar.expander(f"{category} ({len(pages)})", expanded=False):
             for title, page_key in pages:
-                st.sidebar.markdown(f"[{title}](./{page_key})")
+                st.markdown(f"[{title}](./{page_key})")
 
     # Reference documents section
     st.sidebar.markdown("---")
-    st.sidebar.markdown("### Reference")
-    for title, page_key in reference_docs:
-        st.sidebar.markdown(f"[📄 {title}](./{page_key})")
+    with st.sidebar.expander("Reference (2)", expanded=False):
+        for title, page_key in reference_docs:
+            st.markdown(f"[📄 {title}](./{page_key})")
 
 
 def render_footer():
