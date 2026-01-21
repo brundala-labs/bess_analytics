@@ -15,6 +15,7 @@ import streamlit as st
 
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
+from dashboard.components.branding import apply_enka_theme, render_sidebar_branding, render_footer, style_plotly_chart
 from dashboard.components.header import (
     get_dashboard_config,
     render_header,
@@ -25,6 +26,11 @@ from dashboard.components.kpi_glossary import render_kpi_glossary
 from db.loader import get_connection
 
 st.set_page_config(page_title="Portfolio Executive Cockpit", page_icon="📊", layout="wide")
+
+# Apply ENKA branding
+apply_enka_theme()
+render_sidebar_branding()
+
 
 DASHBOARD_KEY = "enka_portfolio_executive"
 

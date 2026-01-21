@@ -15,10 +15,16 @@ import numpy as np
 
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
+from dashboard.components.branding import apply_enka_theme, render_sidebar_branding, render_footer, style_plotly_chart
 from dashboard.components.header import get_dashboard_config, render_header, render_filter_bar
 from db.loader import get_connection
 
 st.set_page_config(page_title="Dispatch vs Asset Stress", page_icon="⚖️", layout="wide")
+
+# Apply ENKA branding
+apply_enka_theme()
+render_sidebar_branding()
+
 
 DASHBOARD_KEY = "combined_dispatch_stress"
 

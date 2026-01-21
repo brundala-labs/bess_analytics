@@ -2,6 +2,7 @@
 BESS Analytics - Home Page
 
 Main entry point for the Streamlit dashboard application.
+ENKA Energy Transition branded.
 """
 
 import sys
@@ -13,52 +14,43 @@ import streamlit as st
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from dashboard.components.header import load_catalog
+from dashboard.components.branding import (
+    apply_enka_theme,
+    render_sidebar_branding,
+    render_footer,
+    ENKA_GREEN,
+    ENKA_DARK,
+)
 
 # Page configuration
 st.set_page_config(
-    page_title="BESS Analytics",
+    page_title="ENKA BESS Analytics",
     page_icon="⚡",
     layout="wide",
     initial_sidebar_state="expanded",
 )
 
-# Custom CSS
-st.markdown("""
-<style>
-    .main-header {
-        font-size: 2.5rem;
-        font-weight: bold;
-        color: #1f77b4;
-        margin-bottom: 1rem;
-    }
-    .dashboard-card {
-        background-color: #f0f2f6;
-        border-radius: 10px;
-        padding: 1rem;
-        margin: 0.5rem 0;
-    }
-    .pack-header {
-        font-size: 1.5rem;
-        font-weight: bold;
-        margin-top: 1.5rem;
-        margin-bottom: 0.5rem;
-    }
-    .metric-highlight {
-        font-size: 2rem;
-        font-weight: bold;
-        color: #2e7d32;
-    }
-</style>
-""", unsafe_allow_html=True)
+# Apply ENKA branding
+apply_enka_theme()
+render_sidebar_branding()
 
 
 def main():
-    # Header
-    st.markdown('<p class="main-header">⚡ BESS Analytics Dashboard</p>', unsafe_allow_html=True)
+    # Header with ENKA branding
+    st.markdown(
+        f'<h1 style="color: {ENKA_DARK};">⚡ ENKA BESS Analytics</h1>',
+        unsafe_allow_html=True
+    )
+
+    st.markdown(f"""
+    <p style="font-size: 1.1rem; color: {ENKA_DARK};">
+    Welcome to the <span style="color: {ENKA_GREEN}; font-weight: bold;">ENKA Energy Transition</span>
+    Battery Energy Storage System (BESS) Analytics Platform.
+    </p>
+    """, unsafe_allow_html=True)
 
     st.markdown("""
-    Welcome to the Battery Energy Storage System (BESS) Analytics Platform.
-    This demo showcases telemetry analytics dashboards for:
+    This platform provides telemetry analytics dashboards for:
 
     - **ENKA** - Asset Owner/Operator Dashboards
     - **TMEIC** - Controller/PCS Dashboards
@@ -144,11 +136,14 @@ def main():
                     # KPIs preview
                     st.markdown("**KPIs:**")
                     kpi_labels = [k.get("label") for k in config.get("kpis", [])]
-                    st.code(", ".join(kpi_labels), language=None)
+                    if kpi_labels:
+                        st.code(", ".join(kpi_labels), language=None)
+                    else:
+                        st.caption("Reference page - no live KPIs")
 
                     # Navigation hint
-                    route = config.get("route", "")
-                    st.caption(f"Navigate to: pages/{route}")
+                    page_file = config.get("page_file", "")
+                    st.caption(f"Navigate to: {page_file}")
 
     # System info
     st.markdown("---")
@@ -157,31 +152,33 @@ def main():
     col1, col2 = st.columns(2)
 
     with col1:
-        st.markdown("**Upstream Systems (Mocked)**")
-        systems = catalog.get("upstream_systems", {})
-        for sys_key, sys_info in systems.items():
-            st.markdown(f"- **{sys_info.get('name')}**: {sys_info.get('description')}")
+        st.markdown("**Data Sources**")
+        st.markdown("""
+        - **TMEIC Controller** - PCS/Plant Control telemetry
+        - **BMS** - Battery Management System data
+        - **ENKA EMS/SCADA** - Events and dispatch
+        - **RTM Settlement** - Market settlement data
+        - **ENKA CMMS** - Maintenance records
+        - **Contracts & Finance** - Partner and SLA data
+        """)
 
     with col2:
-        st.markdown("**Data Model**")
+        st.markdown("**Data Architecture**")
         st.markdown("""
-        - **Dimensions**: dim_site, dim_asset, dim_service, dim_partner, dim_sla
-        - **Facts**: fact_telemetry, fact_dispatch, fact_events, fact_settlement, fact_maintenance, fact_data_quality
-        - **Forecast**: forecast_revenue
-        - **Pipeline**: projects_pipeline
+        - **Bronze Layer**: Raw JSONL micro-batches
+        - **Silver Layer**: Cleaned Parquet tables
+        - **Gold Layer**: Aggregate rollups
         """)
 
         st.markdown("**Technology Stack**")
         st.markdown("""
         - Database: DuckDB
+        - Dashboard: Streamlit + Plotly
         - API: FastAPI
-        - Frontend: Streamlit
-        - Charts: Plotly
         """)
 
     # Footer
-    st.markdown("---")
-    st.caption("BESS Analytics Demo | Use sidebar to navigate to specific dashboards")
+    render_footer()
 
 
 if __name__ == "__main__":

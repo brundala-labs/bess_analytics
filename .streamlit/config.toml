@@ -1,0 +1,10 @@
+[theme]
+# ENKA Energy Transition Brand Colors
+primaryColor = "#81d742"          # ENKA vibrant green
+backgroundColor = "#ffffff"        # White background
+secondaryBackgroundColor = "#f0f2f6"  # Light gray for cards/sidebars
+textColor = "#111111"             # Dark text
+font = "sans serif"
+
+[server]
+headless = true
