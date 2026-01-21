@@ -1,0 +1,833 @@
+# BESS Analytics Dashboard Catalog
+# Defines metadata for all dashboard pages including personas, decisions, data sources, and KPIs
+
+dashboards:
+  # ============================================
+  # OVERVIEW PACK
+  # ============================================
+  architecture_data_flow:
+    title: "Architecture And Data Flow"
+    pack: "Overview"
+    page_file: "00_Architecture_And_Data_Flow.py"
+    personas:
+      - "CEO"
+      - "CTO"
+      - "Head Of Operations"
+      - "Engineering Lead"
+    decisions:
+      - "Approve architecture design"
+      - "Confirm project scope"
+      - "Align stakeholders on data sources"
+      - "Validate integration approach"
+    data_sources:
+      - system: "Architecture Documentation"
+        tables: ["N/A"]
+        notes: "Static reference page"
+    freshness: "Static (reference documentation)"
+    kpis: []
+    kpi_glossary_keys:
+      - "soc_pct"
+      - "soh_pct"
+      - "availability_pct"
+      - "rte_pct"
+      - "lost_revenue_gbp"
+    charts:
+      - "Cloud Streaming Architecture Diagram"
+      - "Medallion Architecture Diagram"
+      - "Canonical Data Model Diagram"
+      - "Data Sources Overview"
+    drilldowns: []
+    export_options:
+      - "HTML"
+
+  proposal_executive_summary:
+    title: "Proposal Executive Summary"
+    pack: "Overview"
+    page_file: "01_Proposal_Executive_Summary.py"
+    personas:
+      - "CEO"
+      - "CFO"
+      - "Partner Stakeholders"
+      - "Board Members"
+    decisions:
+      - "Approve project scope and budget"
+      - "Align on objectives and success criteria"
+      - "Confirm data source access"
+      - "Approve roadmap and timeline"
+    data_sources:
+      - system: "Proposal Documentation"
+        tables: ["N/A"]
+        notes: "Static reference page"
+    freshness: "Static (proposal document)"
+    kpis: []
+    kpi_glossary_keys:
+      - "availability_pct"
+      - "lost_revenue_gbp"
+      - "soh_pct"
+      - "sla_breaches_count"
+    charts:
+      - "Objectives Cards"
+      - "Scope Matrix"
+      - "Roadmap Timeline"
+      - "Risk Matrix"
+    drilldowns: []
+    export_options:
+      - "HTML"
+      - "PDF"
+
+  # ============================================
+  # ENKA PACK
+  # ============================================
+  enka_portfolio_executive:
+    title: "Portfolio Executive Cockpit"
+    pack: "ENKA"
+    page_file: "02_Portfolio_Executive_Cockpit.py"
+    personas:
+      - "CEO"
+      - "CFO"
+      - "Head Of Operations"
+    decisions:
+      - "Portfolio health assessment"
+      - "Capital allocation priorities"
+      - "Performance improvement targets"
+      - "Resource allocation"
+    data_sources:
+      - system: "TMEIC Controller (PCS/Plant Control)"
+        tables: ["fact_telemetry", "fact_dispatch"]
+        notes: "Real-time power, frequency, voltage"
+      - system: "BMS (Battery Management System)"
+        tables: ["fact_telemetry"]
+        notes: "SoC, SoH, temperature"
+      - system: "RTM / Market Settlement Provider"
+        tables: ["fact_settlement"]
+        notes: "Daily settlement data"
+      - system: "ENKA EMS/SCADA"
+        tables: ["fact_events"]
+        notes: "Alarms and events"
+    freshness: "15 minutes (telemetry), Daily (settlement)"
+    kpis:
+      - metric: "total_capacity_mwh"
+        label: "Total Capacity"
+        format: "mwh"
+      - metric: "portfolio_availability_pct"
+        label: "Portfolio Availability"
+        format: "percent"
+      - metric: "mtd_revenue_gbp"
+        label: "MTD Revenue"
+        format: "currency"
+      - metric: "active_faults"
+        label: "Active Faults"
+        format: "number"
+      - metric: "avg_soh_pct"
+        label: "Avg SoH"
+        format: "percent"
+      - metric: "revenue_at_risk_gbp"
+        label: "Revenue At Risk"
+        format: "currency"
+    kpi_glossary_keys:
+      - "soc_pct"
+      - "soh_pct"
+      - "availability_pct"
+      - "power_kw"
+      - "energy_mwh"
+      - "lost_revenue_gbp"
+    charts:
+      - "Portfolio Map"
+      - "Site Status Cards"
+      - "Revenue Trend"
+      - "Availability Heatmap"
+    drilldowns:
+      - "Site Detail"
+      - "Asset Detail"
+
+  enka_partner_monetization:
+    title: "Partner Monetization And Revenue Share"
+    pack: "ENKA"
+    page_file: "03_Partner_Monetization_And_Revenue_Share.py"
+    personas:
+      - "CFO"
+      - "Finance Manager"
+      - "Partner Relations"
+    decisions:
+      - "Partner payout approvals"
+      - "Contract renegotiation triggers"
+      - "Revenue share disputes"
+      - "Partner performance review"
+    data_sources:
+      - system: "RTM / Market Settlement Provider"
+        tables: ["fact_settlement"]
+        notes: "Settled revenues by service"
+      - system: "Contracts And Finance"
+        tables: ["dim_partner", "dim_service"]
+        notes: "Partner terms and revenue share percentages"
+    freshness: "Daily (settlement), On-change (contracts)"
+    kpis:
+      - metric: "total_revenue_gbp"
+        label: "Total Revenue"
+        format: "currency"
+      - metric: "partner_payout_gbp"
+        label: "Partner Payouts"
+        format: "currency"
+      - metric: "net_revenue_gbp"
+        label: "Net Revenue"
+        format: "currency"
+      - metric: "partner_count"
+        label: "Active Partners"
+        format: "number"
+    kpi_glossary_keys:
+      - "partner_payout_gbp"
+      - "energy_mwh"
+      - "revenue_per_mwh"
+    charts:
+      - "Revenue By Partner"
+      - "Revenue By Service"
+      - "Payout Timeline"
+      - "Partner Performance Comparison"
+    drilldowns:
+      - "Partner Detail"
+      - "Service Breakdown"
+
+  enka_rtm_settlement:
+    title: "RTM Settlement Reconciliation"
+    pack: "ENKA"
+    page_file: "04_RTM_Settlement_Reconciliation.py"
+    personas:
+      - "Finance Manager"
+      - "Operations Manager"
+      - "Trading Desk"
+    decisions:
+      - "Settlement dispute identification"
+      - "Dispatch vs settlement variance analysis"
+      - "Price capture optimization"
+      - "Service mix adjustments"
+    data_sources:
+      - system: "RTM / Market Settlement Provider"
+        tables: ["fact_settlement"]
+        notes: "Daily settlement files"
+      - system: "ENKA EMS/SCADA"
+        tables: ["fact_dispatch"]
+        notes: "Dispatch commands and actuals"
+      - system: "TMEIC Controller (PCS/Plant Control)"
+        tables: ["fact_telemetry"]
+        notes: "Metered power output"
+    freshness: "Daily (settlement), 1 minute (dispatch)"
+    kpis:
+      - metric: "settled_revenue_gbp"
+        label: "Settled Revenue"
+        format: "currency"
+      - metric: "settled_energy_mwh"
+        label: "Settled Energy"
+        format: "mwh"
+      - metric: "avg_price_gbp_mwh"
+        label: "Avg Price"
+        format: "currency_per_mwh"
+      - metric: "dispatch_variance_pct"
+        label: "Dispatch Variance"
+        format: "percent"
+    kpi_glossary_keys:
+      - "energy_mwh"
+      - "dispatch_adherence_pct"
+      - "revenue_per_mwh"
+    charts:
+      - "Daily Revenue Trend"
+      - "Price Distribution"
+      - "Service Mix Pie"
+      - "Dispatch Correlation"
+    drilldowns:
+      - "Daily Detail"
+      - "Service Breakdown"
+
+  enka_lifecycle_augmentation:
+    title: "Lifecycle And Augmentation Planning"
+    pack: "ENKA"
+    page_file: "05_Lifecycle_And_Augmentation_Planning.py"
+    personas:
+      - "Asset Manager"
+      - "Engineering Lead"
+      - "CFO"
+    decisions:
+      - "Augmentation timing and sizing"
+      - "Warranty claim preparation"
+      - "Maintenance scheduling"
+      - "End-of-life planning"
+    data_sources:
+      - system: "BMS (Battery Management System)"
+        tables: ["fact_telemetry", "v_battery_health"]
+        notes: "SoH, cycle count, temperature history"
+      - system: "ENKA CMMS"
+        tables: ["fact_maintenance"]
+        notes: "Maintenance history and costs"
+      - system: "Contracts And Finance"
+        tables: ["dim_sla"]
+        notes: "Warranty terms and thresholds"
+    freshness: "Daily (health metrics), On-event (maintenance)"
+    kpis:
+      - metric: "avg_soh_pct"
+        label: "Avg SoH"
+        format: "percent"
+      - metric: "degradation_rate_pct_year"
+        label: "Degradation Rate"
+        format: "percent_per_year"
+      - metric: "warranty_excursions"
+        label: "Warranty Excursions"
+        format: "number"
+      - metric: "years_to_augmentation"
+        label: "Years To Aug"
+        format: "years"
+      - metric: "maintenance_cost_ytd"
+        label: "Maintenance YTD"
+        format: "currency"
+    kpi_glossary_keys:
+      - "soh_pct"
+      - "cycle_count"
+      - "dod_pct"
+      - "cell_temp_max"
+      - "warranty_excursions_count"
+      - "mttr_hours"
+    charts:
+      - "SoH Degradation Trend"
+      - "Cycle Count By Site"
+      - "Temperature Distribution"
+      - "Augmentation Timeline"
+    drilldowns:
+      - "Asset Health Detail"
+      - "Maintenance History"
+
+  enka_development_pipeline:
+    title: "Development Pipeline Tracking"
+    pack: "ENKA"
+    page_file: "06_Development_Pipeline_Tracking.py"
+    personas:
+      - "CEO"
+      - "Development Director"
+      - "CFO"
+    decisions:
+      - "Project prioritization"
+      - "Investment decisions"
+      - "Resource allocation"
+      - "Go/no-go milestones"
+    data_sources:
+      - system: "Projects Pipeline"
+        tables: ["projects_pipeline", "forecast_revenue"]
+        notes: "Development project tracker"
+      - system: "Contracts And Finance"
+        tables: ["dim_site"]
+        notes: "Site master data"
+    freshness: "Weekly (pipeline), Monthly (forecasts)"
+    kpis:
+      - metric: "pipeline_mw"
+        label: "Pipeline MW"
+        format: "mw"
+      - metric: "pipeline_mwh"
+        label: "Pipeline MWh"
+        format: "mwh"
+      - metric: "projects_in_construction"
+        label: "In Construction"
+        format: "number"
+      - metric: "expected_cod_next_12m"
+        label: "COD Next 12M"
+        format: "number"
+    kpi_glossary_keys:
+      - "power_kw"
+      - "energy_mwh"
+    charts:
+      - "Pipeline By Stage"
+      - "COD Timeline"
+      - "Capacity Growth Forecast"
+      - "Investment Summary"
+    drilldowns:
+      - "Project Detail"
+
+  # ============================================
+  # TMEIC PACK
+  # ============================================
+  tmeic_realtime_ops:
+    title: "PCS Controller Real Time Operations"
+    pack: "TMEIC"
+    page_file: "07_PCS_Controller_Real_Time_Operations.py"
+    personas:
+      - "Control Room Operator"
+      - "Site Manager"
+      - "Operations Manager"
+    decisions:
+      - "Real-time dispatch response"
+      - "Fault acknowledgment"
+      - "Manual override decisions"
+      - "Escalation triggers"
+    data_sources:
+      - system: "TMEIC Controller (PCS/Plant Control)"
+        tables: ["fact_telemetry", "fact_dispatch"]
+        notes: "Real-time power, setpoints, status"
+      - system: "BMS (Battery Management System)"
+        tables: ["fact_telemetry"]
+        notes: "SoC, temperature"
+      - system: "ENKA EMS/SCADA"
+        tables: ["fact_events"]
+        notes: "Active alarms"
+    freshness: "1 minute (streaming)"
+    kpis:
+      - metric: "current_power_mw"
+        label: "Current Power"
+        format: "mw"
+      - metric: "current_soc_pct"
+        label: "Current SoC"
+        format: "percent"
+      - metric: "active_alarms"
+        label: "Active Alarms"
+        format: "number"
+      - metric: "dispatch_adherence_pct"
+        label: "Dispatch Adherence"
+        format: "percent"
+      - metric: "comms_status"
+        label: "Comms Status"
+        format: "status"
+    kpi_glossary_keys:
+      - "soc_pct"
+      - "power_kw"
+      - "dispatch_adherence_pct"
+      - "c_rate"
+      - "grid_frequency_hz"
+      - "grid_voltage_pu"
+    charts:
+      - "Power Output Gauge"
+      - "SoC Level Indicator"
+      - "Real-Time Telemetry"
+      - "Active Alarms List"
+    drilldowns:
+      - "Asset Status"
+      - "Event Detail"
+
+  tmeic_controller_health:
+    title: "Controller Health And Communications"
+    pack: "TMEIC"
+    page_file: "08_Controller_Health_And_Communications.py"
+    personas:
+      - "SCADA Engineer"
+      - "IT/OT Manager"
+      - "Operations Manager"
+    decisions:
+      - "Communication issue diagnosis"
+      - "Network maintenance scheduling"
+      - "Data quality remediation"
+      - "Vendor escalation"
+    data_sources:
+      - system: "TMEIC Controller (PCS/Plant Control)"
+        tables: ["fact_telemetry", "fact_data_quality"]
+        notes: "Comms latency, drop rate, status"
+      - system: "ENKA EMS/SCADA"
+        tables: ["fact_events"]
+        notes: "Comms drop events"
+    freshness: "1 minute (telemetry), Hourly (quality metrics)"
+    kpis:
+      - metric: "comms_uptime_pct"
+        label: "Comms Uptime"
+        format: "percent"
+      - metric: "avg_comms_latency_ms"
+        label: "Avg Latency"
+        format: "ms"
+      - metric: "data_completeness_pct"
+        label: "Data Completeness"
+        format: "percent"
+      - metric: "comms_drops_24h"
+        label: "Drops (24h)"
+        format: "number"
+      - metric: "sites_comms_issues"
+        label: "Sites With Issues"
+        format: "number"
+    kpi_glossary_keys:
+      - "comms_health"
+      - "data_completeness_pct"
+    charts:
+      - "Latency Trend"
+      - "Data Completeness Heatmap"
+      - "Comms Drop Events"
+      - "Site Health Summary"
+    drilldowns:
+      - "Site Comms Detail"
+      - "Event Timeline"
+
+  tmeic_faults_timeline:
+    title: "Faults And Trips Timeline"
+    pack: "TMEIC"
+    page_file: "09_Faults_And_Trips_Timeline.py"
+    personas:
+      - "Operations Manager"
+      - "Maintenance Engineer"
+      - "Reliability Engineer"
+    decisions:
+      - "Root cause identification"
+      - "Maintenance dispatch"
+      - "Trend analysis"
+      - "Vendor accountability"
+    data_sources:
+      - system: "TMEIC Controller (PCS/Plant Control)"
+        tables: ["fact_events"]
+        notes: "Fault codes, trip events"
+      - system: "ENKA CMMS"
+        tables: ["fact_maintenance"]
+        notes: "Linked work orders"
+      - system: "BMS (Battery Management System)"
+        tables: ["fact_events"]
+        notes: "Battery-related faults"
+    freshness: "1 minute (events)"
+    kpis:
+      - metric: "faults_mtd"
+        label: "Faults MTD"
+        format: "number"
+      - metric: "trips_mtd"
+        label: "Trips MTD"
+        format: "number"
+      - metric: "mttr_hours"
+        label: "MTTR"
+        format: "hours"
+      - metric: "mtbf_days"
+        label: "MTBF"
+        format: "days"
+      - metric: "repeat_faults"
+        label: "Repeat Faults"
+        format: "number"
+    kpi_glossary_keys:
+      - "mttr_hours"
+      - "mtbf_days"
+      - "availability_pct"
+    charts:
+      - "Event Timeline"
+      - "Fault Code Pareto"
+      - "MTTR Trend"
+      - "Site Comparison"
+    drilldowns:
+      - "Event Detail"
+      - "Root Cause Analysis"
+
+  tmeic_grid_code:
+    title: "Grid Performance And Compliance"
+    pack: "TMEIC"
+    page_file: "10_Grid_Performance_And_Compliance.py"
+    personas:
+      - "Grid Compliance Officer"
+      - "Operations Manager"
+      - "Engineering Lead"
+    decisions:
+      - "Grid code compliance verification"
+      - "Performance reporting"
+      - "Dispatch optimization"
+      - "Regulatory submissions"
+    data_sources:
+      - system: "TMEIC Controller (PCS/Plant Control)"
+        tables: ["fact_telemetry", "fact_dispatch"]
+        notes: "Voltage, frequency, power response"
+      - system: "ENKA EMS/SCADA"
+        tables: ["fact_dispatch"]
+        notes: "Dispatch commands"
+    freshness: "1 minute (telemetry)"
+    kpis:
+      - metric: "dispatch_adherence_pct"
+        label: "Dispatch Adherence"
+        format: "percent"
+      - metric: "frequency_response_score"
+        label: "Freq Response"
+        format: "score"
+      - metric: "voltage_compliance_pct"
+        label: "Voltage Compliance"
+        format: "percent"
+      - metric: "ramp_rate_compliance_pct"
+        label: "Ramp Compliance"
+        format: "percent"
+    kpi_glossary_keys:
+      - "dispatch_adherence_pct"
+      - "grid_frequency_hz"
+      - "grid_voltage_pu"
+      - "reactive_power_kvar"
+    charts:
+      - "Dispatch Vs Actual"
+      - "Frequency Response"
+      - "Voltage Profile"
+      - "Compliance Summary"
+    drilldowns:
+      - "Event Detail"
+      - "Compliance Report"
+
+  tmeic_historian:
+    title: "Historian Explorer"
+    pack: "TMEIC"
+    page_file: "11_Historian_Explorer.py"
+    personas:
+      - "Data Analyst"
+      - "Engineering Lead"
+      - "Reliability Engineer"
+    decisions:
+      - "Deep-dive troubleshooting"
+      - "Pattern identification"
+      - "Data export for analysis"
+      - "Anomaly investigation"
+    data_sources:
+      - system: "TMEIC Controller (PCS/Plant Control)"
+        tables: ["fact_telemetry"]
+        notes: "All controller tags"
+      - system: "BMS (Battery Management System)"
+        tables: ["fact_telemetry"]
+        notes: "All battery tags"
+      - system: "ENKA EMS/SCADA"
+        tables: ["fact_events"]
+        notes: "Events for timeline overlay"
+    freshness: "1 minute (telemetry)"
+    kpis:
+      - metric: "total_tags_count"
+        label: "Available Tags"
+        format: "number"
+      - metric: "selected_data_points"
+        label: "Data Points"
+        format: "number"
+      - metric: "data_date_range"
+        label: "Date Range"
+        format: "text"
+      - metric: "export_status"
+        label: "Export"
+        format: "status"
+    kpi_glossary_keys:
+      - "soc_pct"
+      - "soh_pct"
+      - "power_kw"
+      - "cell_temp_avg"
+      - "grid_frequency_hz"
+      - "inverter_efficiency_pct"
+    charts:
+      - "Multi-Tag Time Series"
+      - "Event Overlay"
+      - "Statistics Summary"
+      - "Raw Data Table"
+    drilldowns:
+      - "Tag Detail"
+    export_options:
+      - "CSV"
+
+  # ============================================
+  # COMBINED PACK
+  # ============================================
+  combined_revenue_loss:
+    title: "Revenue Loss Attribution"
+    pack: "Combined"
+    page_file: "12_Revenue_Loss_Attribution.py"
+    personas:
+      - "CFO"
+      - "Operations Manager"
+      - "Asset Manager"
+    decisions:
+      - "Loss root cause prioritization"
+      - "Improvement investment decisions"
+      - "Vendor accountability"
+      - "Process improvements"
+    data_sources:
+      - system: "RTM / Market Settlement Provider"
+        tables: ["fact_settlement", "fact_revenue_forecast"]
+        notes: "Actual vs forecast revenue"
+      - system: "TMEIC Controller (PCS/Plant Control)"
+        tables: ["fact_events", "fact_dispatch"]
+        notes: "Faults, dispatch deviations"
+      - system: "ENKA EMS/SCADA"
+        tables: ["fact_data_quality"]
+        notes: "Comms gaps"
+    freshness: "Daily (loss attribution)"
+    kpis:
+      - metric: "total_lost_revenue_gbp"
+        label: "Total Lost Revenue"
+        format: "currency"
+      - metric: "loss_from_faults_gbp"
+        label: "From Faults"
+        format: "currency"
+      - metric: "loss_from_dispatch_gbp"
+        label: "From Dispatch"
+        format: "currency"
+      - metric: "loss_from_comms_gbp"
+        label: "From Comms"
+        format: "currency"
+      - metric: "capture_rate_pct"
+        label: "Capture Rate"
+        format: "percent"
+    kpi_glossary_keys:
+      - "lost_revenue_gbp"
+      - "availability_pct"
+      - "dispatch_adherence_pct"
+      - "comms_health"
+    charts:
+      - "Loss Waterfall"
+      - "Attribution Breakdown"
+      - "Daily Loss Trend"
+      - "Site Comparison"
+    drilldowns:
+      - "Loss Detail"
+      - "Event Correlation"
+
+  combined_dispatch_stress:
+    title: "Dispatch Versus Asset Stress"
+    pack: "Combined"
+    page_file: "13_Dispatch_Versus_Asset_Stress.py"
+    personas:
+      - "Asset Manager"
+      - "Trading Desk"
+      - "Engineering Lead"
+    decisions:
+      - "Dispatch strategy optimization"
+      - "Revenue vs degradation tradeoffs"
+      - "Operating envelope limits"
+      - "Warranty protection"
+    data_sources:
+      - system: "ENKA EMS/SCADA"
+        tables: ["fact_dispatch"]
+        notes: "Dispatch intensity"
+      - system: "BMS (Battery Management System)"
+        tables: ["fact_telemetry", "v_battery_health"]
+        notes: "SoH, temperature, cycles"
+      - system: "RTM / Market Settlement Provider"
+        tables: ["fact_settlement"]
+        notes: "Revenue correlation"
+    freshness: "Daily (analysis)"
+    kpis:
+      - metric: "dispatch_intensity_score"
+        label: "Intensity Score"
+        format: "score"
+      - metric: "degradation_rate_pct_month"
+        label: "Degradation Rate"
+        format: "percent_per_month"
+      - metric: "revenue_per_cycle"
+        label: "Revenue/Cycle"
+        format: "currency"
+      - metric: "thermal_stress_events"
+        label: "Thermal Events"
+        format: "number"
+      - metric: "optimal_dispatch_score"
+        label: "Optimal Score"
+        format: "score"
+    kpi_glossary_keys:
+      - "c_rate"
+      - "dod_pct"
+      - "soh_pct"
+      - "cycle_count"
+      - "cell_temp_max"
+      - "rte_pct"
+    charts:
+      - "Intensity Vs SoH Scatter"
+      - "Temperature Vs Cycles"
+      - "Revenue Vs Degradation"
+      - "Dispatch Trend"
+    drilldowns:
+      - "Site Analysis"
+      - "Optimal Strategy"
+
+  combined_sla_warranty:
+    title: "SLA And Warranty Evidence Pack"
+    pack: "Combined"
+    page_file: "14_SLA_And_Warranty_Evidence_Pack.py"
+    personas:
+      - "Asset Manager"
+      - "Legal/Contracts"
+      - "Finance Manager"
+    decisions:
+      - "SLA dispute preparation"
+      - "Warranty claim filing"
+      - "Penalty negotiation"
+      - "Contract renewal terms"
+    data_sources:
+      - system: "Contracts And Finance"
+        tables: ["dim_sla", "v_sla_compliance"]
+        notes: "SLA definitions and status"
+      - system: "TMEIC Controller (PCS/Plant Control)"
+        tables: ["fact_events"]
+        notes: "Fault evidence"
+      - system: "BMS (Battery Management System)"
+        tables: ["fact_telemetry"]
+        notes: "Operating excursions"
+      - system: "ENKA CMMS"
+        tables: ["fact_maintenance"]
+        notes: "Maintenance records"
+    freshness: "Daily (compliance check)"
+    kpis:
+      - metric: "sla_breaches_mtd"
+        label: "SLA Breaches"
+        format: "number"
+      - metric: "penalty_exposure_gbp"
+        label: "Penalty Exposure"
+        format: "currency"
+      - metric: "warranty_claims_pending"
+        label: "Claims Pending"
+        format: "number"
+      - metric: "evidence_packets_ready"
+        label: "Evidence Ready"
+        format: "number"
+      - metric: "sla_compliance_score"
+        label: "Compliance Score"
+        format: "percent"
+    kpi_glossary_keys:
+      - "sla_breaches_count"
+      - "penalty_estimate_gbp"
+      - "warranty_excursions_count"
+      - "availability_pct"
+    charts:
+      - "SLA Status Matrix"
+      - "Availability Trend"
+      - "Excursion Log"
+      - "Penalty Calculator"
+    drilldowns:
+      - "SLA Detail"
+      - "Evidence Export"
+    export_options:
+      - "HTML"
+      - "CSV"
+
+  combined_vendor_benchmarking:
+    title: "Portfolio Benchmarking By Vendor And Site"
+    pack: "Combined"
+    page_file: "15_Portfolio_Benchmarking_By_Vendor_And_Site.py"
+    personas:
+      - "CEO"
+      - "Procurement"
+      - "Engineering Lead"
+    decisions:
+      - "Vendor selection for new projects"
+      - "Performance improvement targets"
+      - "Contract renegotiation"
+      - "Best practice sharing"
+    data_sources:
+      - system: "TMEIC Controller (PCS/Plant Control)"
+        tables: ["fact_telemetry", "fact_events"]
+        notes: "Controller performance"
+      - system: "BMS (Battery Management System)"
+        tables: ["fact_telemetry", "v_battery_health"]
+        notes: "Battery performance"
+      - system: "RTM / Market Settlement Provider"
+        tables: ["fact_settlement"]
+        notes: "Revenue performance"
+      - system: "Contracts And Finance"
+        tables: ["dim_site"]
+        notes: "Vendor assignments"
+    freshness: "Daily (benchmarks)"
+    kpis:
+      - metric: "vendor_count"
+        label: "Vendors"
+        format: "number"
+      - metric: "best_vendor_availability"
+        label: "Best Availability"
+        format: "text"
+      - metric: "best_vendor_revenue_mw"
+        label: "Best Revenue/MW"
+        format: "text"
+      - metric: "lowest_fault_rate_vendor"
+        label: "Lowest Faults"
+        format: "text"
+      - metric: "efficiency_gap_pct"
+        label: "Efficiency Gap"
+        format: "percent"
+    kpi_glossary_keys:
+      - "availability_pct"
+      - "rte_pct"
+      - "mtbf_days"
+      - "inverter_efficiency_pct"
+      - "revenue_per_mwh"
+    charts:
+      - "Vendor Radar Chart"
+      - "Site Scatter Plot"
+      - "Reliability Comparison"
+      - "Revenue Performance"
+    drilldowns:
+      - "Vendor Detail"
+      - "Site Comparison"

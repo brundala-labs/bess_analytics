@@ -7,6 +7,7 @@ Generates realistic BESS telemetry, events, and financial data for demo purposes
 - Realistic patterns: daily price cycles, faults, comms drops, degradation
 """
 
+import json
 import os
 import random
 from datetime import datetime, timedelta
@@ -23,6 +24,9 @@ MINUTES_PER_DAY = 1440
 NUM_SITES = 3
 VENDORS = ["TMEIC", "OtherPCS"]
 DATA_DIR = Path(__file__).parent.parent / "data"
+BRONZE_DIR = DATA_DIR / "bronze"
+SILVER_DIR = DATA_DIR / "silver"
+GOLD_DIR = DATA_DIR / "gold"
 
 # Seed for reproducibility
 np.random.seed(42)
@@ -689,12 +693,197 @@ def generate_projects_pipeline() -> pd.DataFrame:
     return pd.DataFrame(projects)
 
 
+def generate_bronze_layer(telemetry_df: pd.DataFrame, events_df: pd.DataFrame, sites_df: pd.DataFrame):
+    """
+    Generate Bronze layer data as JSONL micro-batches.
+
+    Simulates streaming ingestion from sensors/controllers.
+    """
+    BRONZE_DIR.mkdir(parents=True, exist_ok=True)
+    telemetry_bronze = BRONZE_DIR / "telemetry"
+    events_bronze = BRONZE_DIR / "events"
+    telemetry_bronze.mkdir(exist_ok=True)
+    events_bronze.mkdir(exist_ok=True)
+
+    logger.info("Generating Bronze layer (raw JSONL micro-batches)...")
+
+    # Sample a subset for bronze layer (to avoid huge files)
+    sample_hours = 24  # Generate bronze for last 24 hours only
+    latest_ts = telemetry_df["ts"].max()
+    bronze_start = latest_ts - timedelta(hours=sample_hours)
+    bronze_telemetry = telemetry_df[telemetry_df["ts"] >= bronze_start].copy()
+
+    # Generate telemetry micro-batches (hourly chunks per site)
+    for site_id in sites_df["site_id"].unique():
+        site_telemetry = bronze_telemetry[bronze_telemetry["site_id"] == site_id].copy()
+
+        if site_telemetry.empty:
+            continue
+
+        # Group by hour
+        site_telemetry["hour"] = site_telemetry["ts"].dt.floor("H")
+
+        for hour, hour_data in site_telemetry.groupby("hour"):
+            # Create JSONL file for this hour
+            hour_str = hour.strftime("%Y%m%d%H")
+            filename = telemetry_bronze / f"{site_id}_{hour_str}.jsonl"
+
+            # Convert to raw format (as if from sensor)
+            records = []
+            for _, row in hour_data.iterrows():
+                record = {
+                    "source": "controller" if row["tag"] in ["p_kw", "q_kvar", "v_pu", "f_hz", "controller_status", "inverter_efficiency_pct"] else "bms",
+                    "site": row["site_id"],
+                    "asset": row["asset_id"],
+                    "timestamp": row["ts"].isoformat(),
+                    "tag": row["tag"],
+                    "value": float(row["value"]) if pd.notna(row["value"]) else None,
+                    "quality": "good" if random.random() > 0.01 else "uncertain",
+                    "received_at": (row["ts"] + timedelta(seconds=random.randint(1, 30))).isoformat()
+                }
+                records.append(json.dumps(record))
+
+            with open(filename, "w") as f:
+                f.write("\n".join(records))
+
+    # Generate events bronze (single file per day)
+    events_df_copy = events_df.copy()
+    events_df_copy["date"] = pd.to_datetime(events_df_copy["start_ts"]).dt.date
+    for date, day_events in events_df_copy.groupby("date"):
+        date_str = date.strftime("%Y%m%d")
+        filename = events_bronze / f"events_{date_str}.jsonl"
+
+        records = []
+        for _, row in day_events.iterrows():
+            record = {
+                "source": "controller",
+                "event_id": row["event_id"],
+                "site": row["site_id"],
+                "asset": row.get("asset_id"),
+                "start_ts": row["start_ts"].isoformat() if pd.notna(row["start_ts"]) else None,
+                "end_ts": row["end_ts"].isoformat() if pd.notna(row["end_ts"]) else None,
+                "severity": row["severity"],
+                "type": row["event_type"],
+                "code": row["code"],
+                "message": row["description"],
+                "received_at": datetime.now().isoformat()
+            }
+            records.append(json.dumps(record))
+
+        with open(filename, "w") as f:
+            f.write("\n".join(records))
+
+    logger.info(f"Bronze layer generated in {BRONZE_DIR}")
+
+
+def generate_gold_layer(sites_df: pd.DataFrame, telemetry_df: pd.DataFrame,
+                        settlement_df: pd.DataFrame, events_df: pd.DataFrame):
+    """
+    Generate Gold layer rollup/aggregate tables.
+    """
+    GOLD_DIR.mkdir(parents=True, exist_ok=True)
+
+    logger.info("Generating Gold layer (aggregates and rollups)...")
+
+    # 1. agg_telemetry_15min - 15-minute aggregates
+    telemetry_15min = telemetry_df.copy()
+    telemetry_15min["ts_15min"] = telemetry_15min["ts"].dt.floor("15min")
+
+    agg_telemetry_15min = telemetry_15min.groupby(
+        ["ts_15min", "site_id", "tag"]
+    ).agg({
+        "value": ["mean", "min", "max", "std", "count"]
+    }).reset_index()
+    agg_telemetry_15min.columns = ["ts_15min", "site_id", "tag", "avg_value", "min_value", "max_value", "std_value", "sample_count"]
+    agg_telemetry_15min.to_parquet(GOLD_DIR / "agg_telemetry_15min.parquet", index=False)
+
+    # 2. agg_site_daily - Daily site rollups
+    telemetry_daily = telemetry_df.copy()
+    telemetry_daily["date"] = telemetry_daily["ts"].dt.date
+
+    # Calculate daily metrics per site
+    daily_metrics = []
+    for site_id in sites_df["site_id"].unique():
+        site_data = telemetry_daily[telemetry_daily["site_id"] == site_id]
+        site_info = sites_df[sites_df["site_id"] == site_id].iloc[0]
+
+        for date, day_data in site_data.groupby("date"):
+            # Get tag values
+            soc_data = day_data[day_data["tag"] == "soc_pct"]["value"]
+            soh_data = day_data[day_data["tag"] == "soh_pct"]["value"]
+            power_data = day_data[day_data["tag"] == "p_kw"]["value"]
+            temp_data = day_data[day_data["tag"] == "temp_c_max"]["value"]
+
+            # Calculate metrics
+            dod = soc_data.max() - soc_data.min() if len(soc_data) > 0 else 0
+            avg_soh = soh_data.mean() if len(soh_data) > 0 else None
+            max_temp = temp_data.max() if len(temp_data) > 0 else None
+            energy_charged = (power_data[power_data < 0].abs().sum() / 60) / 1000 if len(power_data) > 0 else 0  # MWh
+            energy_discharged = (power_data[power_data > 0].sum() / 60) / 1000 if len(power_data) > 0 else 0  # MWh
+
+            daily_metrics.append({
+                "date": date,
+                "site_id": site_id,
+                "dod_pct": dod,
+                "avg_soh_pct": avg_soh,
+                "max_temp_c": max_temp,
+                "energy_charged_mwh": energy_charged,
+                "energy_discharged_mwh": energy_discharged,
+                "cycles_equivalent": (energy_charged + energy_discharged) / (2 * site_info["bess_mwh"]) if site_info["bess_mwh"] > 0 else 0
+            })
+
+    agg_site_daily = pd.DataFrame(daily_metrics)
+    agg_site_daily.to_parquet(GOLD_DIR / "agg_site_daily.parquet", index=False)
+
+    # 3. agg_revenue_daily - Daily revenue by site and service
+    agg_revenue_daily = settlement_df.groupby(["date", "site_id", "service_id"]).agg({
+        "revenue_gbp": "sum",
+        "energy_mwh": "sum"
+    }).reset_index()
+    agg_revenue_daily["revenue_per_mwh"] = agg_revenue_daily["revenue_gbp"] / agg_revenue_daily["energy_mwh"].replace(0, np.nan)
+    agg_revenue_daily.to_parquet(GOLD_DIR / "agg_revenue_daily.parquet", index=False)
+
+    # 4. agg_events_daily - Daily event counts by site and type
+    events_daily = events_df.copy()
+    events_daily["date"] = pd.to_datetime(events_daily["start_ts"]).dt.date
+
+    agg_events_daily = events_daily.groupby(["date", "site_id", "event_type", "severity"]).agg({
+        "event_id": "count"
+    }).reset_index()
+    agg_events_daily.columns = ["date", "site_id", "event_type", "severity", "event_count"]
+    agg_events_daily.to_parquet(GOLD_DIR / "agg_events_daily.parquet", index=False)
+
+    # 5. agg_site_monthly - Monthly aggregates
+    agg_site_monthly = agg_site_daily.copy()
+    agg_site_monthly["month"] = pd.to_datetime(agg_site_monthly["date"]).dt.to_period("M")
+
+    agg_site_monthly = agg_site_monthly.groupby(["month", "site_id"]).agg({
+        "dod_pct": "mean",
+        "avg_soh_pct": "mean",
+        "max_temp_c": "max",
+        "energy_charged_mwh": "sum",
+        "energy_discharged_mwh": "sum",
+        "cycles_equivalent": "sum"
+    }).reset_index()
+    agg_site_monthly["month"] = agg_site_monthly["month"].astype(str)
+    agg_site_monthly.to_parquet(GOLD_DIR / "agg_site_monthly.parquet", index=False)
+
+    logger.info(f"Gold layer generated in {GOLD_DIR}")
+    logger.info(f"  - agg_telemetry_15min: {len(agg_telemetry_15min):,} records")
+    logger.info(f"  - agg_site_daily: {len(agg_site_daily):,} records")
+    logger.info(f"  - agg_revenue_daily: {len(agg_revenue_daily):,} records")
+    logger.info(f"  - agg_events_daily: {len(agg_events_daily):,} records")
+
+
 def main():
     """Main data generation function."""
     logger.info("Starting BESS Analytics data generation...")
 
-    # Create data directory
+    # Create data directories (Medallion architecture)
     DATA_DIR.mkdir(parents=True, exist_ok=True)
+    BRONZE_DIR.mkdir(parents=True, exist_ok=True)
+    SILVER_DIR.mkdir(parents=True, exist_ok=True)
+    GOLD_DIR.mkdir(parents=True, exist_ok=True)
 
     # Set start date (30 days ago from "now")
     end_date = datetime(2024, 3, 15)  # Fixed date for reproducibility
@@ -751,19 +940,30 @@ def main():
     pipeline_df.to_parquet(DATA_DIR / "projects_pipeline.parquet", index=False)
     logger.info(f"Pipeline: {len(pipeline_df):,} records")
 
+    logger.info("Silver layer (core tables) complete!")
+
+    # Generate Bronze layer (raw streaming simulation)
+    generate_bronze_layer(telemetry_df, events_df, sites_df)
+
+    # Generate Gold layer (aggregates and rollups)
+    generate_gold_layer(sites_df, telemetry_df, settlement_df, events_df)
+
     logger.info("Data generation complete!")
     logger.info(f"Files saved to: {DATA_DIR}")
 
     # Print summary
-    print("\n=== Data Generation Summary ===")
+    print("\n=== Data Generation Summary (Medallion Architecture) ===")
     print(f"Period: {start_date.date()} to {end_date.date()}")
     print(f"Sites: {len(sites_df)}")
     print(f"Assets: {len(assets_df)}")
-    print(f"Telemetry records: {len(telemetry_df):,}")
-    print(f"Dispatch records: {len(dispatch_df):,}")
-    print(f"Events: {len(events_df)}")
-    print(f"Settlement records: {len(settlement_df)}")
-    print(f"Maintenance tickets: {len(maintenance_df)}")
+    print(f"\nSilver Layer (Core Tables):")
+    print(f"  - Telemetry records: {len(telemetry_df):,}")
+    print(f"  - Dispatch records: {len(dispatch_df):,}")
+    print(f"  - Events: {len(events_df)}")
+    print(f"  - Settlement records: {len(settlement_df)}")
+    print(f"  - Maintenance tickets: {len(maintenance_df)}")
+    print(f"\nBronze Layer: {BRONZE_DIR}")
+    print(f"Gold Layer: {GOLD_DIR}")
 
 
 if __name__ == "__main__":

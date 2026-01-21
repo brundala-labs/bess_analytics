@@ -1,0 +1,355 @@
+# KPI Dictionary for BESS Analytics
+# Source: BESS Fundamentals Reference
+# All calculations are based on internal data sources only
+
+kpis:
+  soc_pct:
+    display_name: "State Of Charge (SoC)"
+    definition: "The current charge level of the battery expressed as a percentage of total capacity."
+    units: "%"
+    calculation_demo: "soc_pct = (current_energy_kwh / total_capacity_kwh) * 100"
+    lineage:
+      tables:
+        - fact_telemetry
+      tags:
+        - soc_pct
+    source_label: "BESS Fundamentals Reference"
+    assumptions: "Reported directly from BMS. Range 0-100%. Values outside range indicate sensor error."
+
+  soh_pct:
+    display_name: "State Of Health (SoH)"
+    definition: "The current maximum capacity of the battery compared to its original rated capacity, indicating degradation over time."
+    units: "%"
+    calculation_demo: "soh_pct = (current_max_capacity_kwh / original_rated_capacity_kwh) * 100"
+    lineage:
+      tables:
+        - fact_telemetry
+        - dim_asset
+      tags:
+        - soh_pct
+    source_label: "BESS Fundamentals Reference"
+    assumptions: "Calculated by BMS using capacity fade models. New battery starts at 100%. Warranty typically guarantees >80% at end of life."
+
+  dod_pct:
+    display_name: "Depth Of Discharge (DoD)"
+    definition: "The daily swing in state of charge, indicating how deeply the battery was cycled."
+    units: "%"
+    calculation_demo: "dod_pct = MAX(soc_pct) - MIN(soc_pct) over 24-hour period"
+    lineage:
+      tables:
+        - fact_telemetry
+        - agg_site_daily
+      tags:
+        - soc_pct
+    source_label: "BESS Fundamentals Reference"
+    assumptions: "Higher DoD accelerates degradation. Typical operating range 10-90% SoC to preserve battery life."
+
+  rte_pct:
+    display_name: "Round-Trip Efficiency (RTE)"
+    definition: "The ratio of energy discharged to energy charged, measuring energy losses in the charge/discharge cycle."
+    units: "%"
+    calculation_demo: "rte_pct = (total_discharged_mwh / total_charged_mwh) * 100"
+    lineage:
+      tables:
+        - fact_telemetry
+        - fact_dispatch
+      tags:
+        - p_kw
+    source_label: "BESS Fundamentals Reference"
+    assumptions: "Proxy calculation based on integrated power. Typical BESS RTE is 85-92%. Excludes auxiliary loads."
+
+  c_rate:
+    display_name: "C-Rate"
+    definition: "The rate at which the battery is being charged or discharged relative to its capacity. 1C means full charge/discharge in 1 hour."
+    units: "C (dimensionless)"
+    calculation_demo: "c_rate = abs(p_kw) / (bess_mwh * 1000)"
+    lineage:
+      tables:
+        - fact_telemetry
+        - dim_site
+      tags:
+        - p_kw
+    source_label: "BESS Fundamentals Reference"
+    assumptions: "Higher C-rates cause more heat and faster degradation. Typical grid BESS operates at 0.5C-2C."
+
+  power_kw:
+    display_name: "Power (kW)"
+    definition: "The instantaneous rate of energy flow to/from the battery. Positive = discharging, Negative = charging."
+    units: "kW"
+    calculation_demo: "Direct measurement from PCS/Controller"
+    lineage:
+      tables:
+        - fact_telemetry
+        - fact_dispatch
+      tags:
+        - p_kw
+    source_label: "BESS Fundamentals Reference"
+    assumptions: "Sign convention: positive = export/discharge, negative = import/charge."
+
+  energy_mwh:
+    display_name: "Energy (MWh)"
+    definition: "The cumulative amount of energy transferred over a time period."
+    units: "MWh"
+    calculation_demo: "energy_mwh = SUM(p_kw * interval_hours) / 1000"
+    lineage:
+      tables:
+        - fact_telemetry
+        - fact_settlement
+      tags:
+        - p_kw
+    source_label: "BESS Fundamentals Reference"
+    assumptions: "Integrated from power measurements. Settlement energy may differ due to metering location."
+
+  availability_pct:
+    display_name: "Availability"
+    definition: "The percentage of time the asset was available to provide service, excluding forced outages."
+    units: "%"
+    calculation_demo: "availability_pct = (1 - forced_outage_minutes / total_minutes) * 100"
+    lineage:
+      tables:
+        - fact_events
+        - agg_site_daily
+      tags: []
+    source_label: "BESS Fundamentals Reference"
+    assumptions: "Excludes planned maintenance. Forced outages include faults, trips, and unplanned events."
+
+  dispatch_adherence_pct:
+    display_name: "Dispatch Adherence"
+    definition: "How closely the actual power output matched the dispatch command from the market or EMS."
+    units: "%"
+    calculation_demo: "dispatch_adherence_pct = (1 - SUM(abs(command_kw - actual_kw)) / SUM(abs(command_kw))) * 100"
+    lineage:
+      tables:
+        - fact_dispatch
+      tags:
+        - p_kw
+    source_label: "BESS Fundamentals Reference"
+    assumptions: "100% = perfect adherence. Deviations can be due to ramp limits, faults, or comms issues."
+
+  lost_revenue_gbp:
+    display_name: "Lost Revenue"
+    definition: "Revenue that could not be captured due to asset unavailability, dispatch deviations, or data gaps."
+    units: "GBP"
+    calculation_demo: "lost_revenue_gbp = forecast_revenue_gbp - actual_revenue_gbp, attributed by cause"
+    lineage:
+      tables:
+        - fact_settlement
+        - fact_revenue_forecast
+        - fact_events
+        - fact_data_quality
+      tags: []
+    source_label: "BESS Fundamentals Reference"
+    assumptions: "Attribution uses time-overlap analysis with events, dispatch misses, and comms gaps."
+
+  comms_health:
+    display_name: "Communications Health"
+    definition: "Composite score indicating the reliability of data communications from the site."
+    units: "Score (0-100)"
+    calculation_demo: "comms_health = f(comms_drop_rate, completeness_pct, latency_p95_sec, timestamp_drift_sec)"
+    lineage:
+      tables:
+        - fact_telemetry
+        - fact_data_quality
+      tags:
+        - comms_latency_ms
+        - comms_drop_rate
+    source_label: "BESS Fundamentals Reference"
+    assumptions: "Weighted composite. High latency or frequent drops reduce score. Target >95."
+
+  mttr_hours:
+    display_name: "Mean Time To Repair (MTTR)"
+    definition: "Average time to restore service after a fault or failure event."
+    units: "Hours"
+    calculation_demo: "mttr_hours = AVG(closed_ts - opened_ts) for fault-related maintenance tickets"
+    lineage:
+      tables:
+        - fact_maintenance
+        - fact_events
+      tags: []
+    source_label: "BESS Fundamentals Reference"
+    assumptions: "Includes only unplanned maintenance. Lower is better. Target <4 hours for critical faults."
+
+  mtbf_days:
+    display_name: "Mean Time Between Failures (MTBF)"
+    definition: "Average operating time between failure events."
+    units: "Days"
+    calculation_demo: "mtbf_days = total_operating_days / number_of_failures"
+    lineage:
+      tables:
+        - fact_events
+        - agg_site_daily
+      tags: []
+    source_label: "BESS Fundamentals Reference"
+    assumptions: "Failures = severity critical or high. Higher MTBF indicates better reliability."
+
+  warranty_excursions_count:
+    display_name: "Warranty Excursions"
+    definition: "Count of operating conditions that exceeded warranty limits (temperature, voltage, current)."
+    units: "Count"
+    calculation_demo: "COUNT of periods where temp_c_max > 45 OR voltage outside 0.9-1.1 pu"
+    lineage:
+      tables:
+        - fact_telemetry
+        - dim_sla
+      tags:
+        - temp_c_max
+        - v_pu
+        - current_a
+    source_label: "BESS Fundamentals Reference"
+    assumptions: "Excursions may void warranty. Thresholds from manufacturer specifications."
+
+  partner_payout_gbp:
+    display_name: "Partner Revenue Payout"
+    definition: "Revenue share owed to financial or operational partners based on contract terms."
+    units: "GBP"
+    calculation_demo: "partner_payout_gbp = revenue_gbp * revenue_share_pct / 100"
+    lineage:
+      tables:
+        - fact_settlement
+        - dim_partner
+      tags: []
+    source_label: "BESS Fundamentals Reference"
+    assumptions: "Calculated per partner per site. Payout typically monthly based on settled revenue."
+
+  sla_breaches_count:
+    display_name: "SLA Breaches"
+    definition: "Count of service level agreement violations during the reporting period."
+    units: "Count"
+    calculation_demo: "COUNT of periods where actual_metric < threshold for each SLA definition"
+    lineage:
+      tables:
+        - dim_sla
+        - v_sla_compliance
+      tags: []
+    source_label: "BESS Fundamentals Reference"
+    assumptions: "SLA definitions stored in dim_sla. Breaches trigger penalty calculations."
+
+  penalty_estimate_gbp:
+    display_name: "Penalty Exposure"
+    definition: "Estimated financial penalties due to SLA breaches."
+    units: "GBP"
+    calculation_demo: "penalty_estimate_gbp = SUM(breach_hours * penalty_rate_per_hour)"
+    lineage:
+      tables:
+        - dim_sla
+        - v_sla_compliance
+        - fact_events
+      tags: []
+    source_label: "BESS Fundamentals Reference"
+    assumptions: "Based on SLA contract terms. Actual penalties subject to dispute resolution."
+
+  inverter_efficiency_pct:
+    display_name: "Inverter Efficiency"
+    definition: "The conversion efficiency of the power conversion system (DC to AC and vice versa)."
+    units: "%"
+    calculation_demo: "inverter_efficiency_pct = (ac_power_kw / dc_power_kw) * 100"
+    lineage:
+      tables:
+        - fact_telemetry
+      tags:
+        - inverter_efficiency_pct
+    source_label: "BESS Fundamentals Reference"
+    assumptions: "Reported by PCS. Typical range 95-98%. Lower at partial loads."
+
+  cycle_count:
+    display_name: "Equivalent Full Cycles"
+    definition: "Cumulative number of complete charge/discharge cycles, normalized to full capacity."
+    units: "Cycles"
+    calculation_demo: "cycle_count = cumulative_energy_throughput_mwh / (2 * bess_mwh)"
+    lineage:
+      tables:
+        - fact_telemetry
+        - dim_site
+      tags:
+        - cycle_count
+    source_label: "BESS Fundamentals Reference"
+    assumptions: "Partial cycles counted proportionally. Key input for warranty and degradation tracking."
+
+  cell_temp_avg:
+    display_name: "Average Cell Temperature"
+    definition: "Mean temperature across battery cells, critical for performance and safety."
+    units: "Celsius"
+    calculation_demo: "Direct measurement from BMS temperature sensors"
+    lineage:
+      tables:
+        - fact_telemetry
+      tags:
+        - temp_c_avg
+    source_label: "BESS Fundamentals Reference"
+    assumptions: "Optimal range 15-35C. High temps accelerate degradation; low temps reduce capacity."
+
+  cell_temp_max:
+    display_name: "Maximum Cell Temperature"
+    definition: "Highest temperature recorded among all battery cells, used for thermal limit monitoring."
+    units: "Celsius"
+    calculation_demo: "MAX of all cell temperature readings from BMS"
+    lineage:
+      tables:
+        - fact_telemetry
+      tags:
+        - temp_c_max
+    source_label: "BESS Fundamentals Reference"
+    assumptions: "Warning at 40C, critical at 45C. Exceedances may trigger curtailment or shutdown."
+
+  grid_frequency_hz:
+    display_name: "Grid Frequency"
+    definition: "The electrical frequency of the grid connection point."
+    units: "Hz"
+    calculation_demo: "Direct measurement from PCS"
+    lineage:
+      tables:
+        - fact_telemetry
+      tags:
+        - f_hz
+    source_label: "BESS Fundamentals Reference"
+    assumptions: "Nominal 50Hz (UK). Deviations trigger frequency response services."
+
+  grid_voltage_pu:
+    display_name: "Grid Voltage (Per Unit)"
+    definition: "Voltage at the grid connection point normalized to nominal voltage."
+    units: "p.u."
+    calculation_demo: "v_pu = measured_voltage_kv / nominal_voltage_kv"
+    lineage:
+      tables:
+        - fact_telemetry
+      tags:
+        - v_pu
+    source_label: "BESS Fundamentals Reference"
+    assumptions: "Nominal = 1.0 pu. Acceptable range typically 0.9-1.1 pu."
+
+  reactive_power_kvar:
+    display_name: "Reactive Power"
+    definition: "The component of power that oscillates between source and load, used for voltage support."
+    units: "kVAr"
+    calculation_demo: "Direct measurement from PCS"
+    lineage:
+      tables:
+        - fact_telemetry
+      tags:
+        - q_kvar
+    source_label: "BESS Fundamentals Reference"
+    assumptions: "Positive = capacitive (exporting vars), negative = inductive (absorbing vars)."
+
+  data_completeness_pct:
+    display_name: "Data Completeness"
+    definition: "Percentage of expected data points actually received during a time period."
+    units: "%"
+    calculation_demo: "data_completeness_pct = (received_points / expected_points) * 100"
+    lineage:
+      tables:
+        - fact_data_quality
+      tags: []
+    source_label: "BESS Fundamentals Reference"
+    assumptions: "Expected points based on 1-minute telemetry interval. Target >99%."
+
+  revenue_per_mwh:
+    display_name: "Revenue Per MWh"
+    definition: "Average revenue earned per unit of energy traded."
+    units: "GBP/MWh"
+    calculation_demo: "revenue_per_mwh = total_revenue_gbp / total_energy_mwh"
+    lineage:
+      tables:
+        - fact_settlement
+      tags: []
+    source_label: "BESS Fundamentals Reference"
+    assumptions: "Blended across all services. Higher indicates better market timing or service mix."

@@ -35,6 +35,8 @@ env/
 
 # Data files - committed for easy deployment
 # To regenerate: python -m data_gen.generate
+# Note: Bronze layer (raw JSONL) is excluded to save space
+data/bronze/
 
 # Logs
 *.log

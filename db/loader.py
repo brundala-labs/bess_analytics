@@ -11,6 +11,7 @@ import duckdb
 from loguru import logger
 
 DATA_DIR = Path(__file__).parent.parent / "data"
+GOLD_DIR = DATA_DIR / "gold"
 DB_PATH = DATA_DIR / "bess_analytics.duckdb"
 
 
@@ -55,6 +56,25 @@ def load_data(conn: Optional[duckdb.DuckDBPyConnection] = None) -> duckdb.DuckDB
             logger.info(f"  Loaded {table}: {count:,} rows")
         else:
             logger.warning(f"  Missing: {parquet_path}")
+
+    # Load Gold layer aggregate tables (if they exist)
+    gold_tables = [
+        "agg_telemetry_15min",
+        "agg_site_daily",
+        "agg_site_monthly",
+        "agg_revenue_daily",
+        "agg_events_daily",
+    ]
+
+    for table in gold_tables:
+        parquet_path = GOLD_DIR / f"{table}.parquet"
+        if parquet_path.exists():
+            conn.execute(f"""
+                CREATE OR REPLACE TABLE {table} AS
+                SELECT * FROM read_parquet('{parquet_path}')
+            """)
+            count = conn.execute(f"SELECT COUNT(*) FROM {table}").fetchone()[0]
+            logger.info(f"  Loaded Gold/{table}: {count:,} rows")
 
     # Create analytical views
     create_views(conn)
