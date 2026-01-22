@@ -83,7 +83,7 @@ def main():
         GOLD --> API
         API --> BI
     """
-    render_mermaid(cloud_diagram, height=550)
+    render_mermaid(cloud_diagram, height=750)
 
     st.markdown("")  # Spacer
     col1, col2 = st.columns(2)
@@ -132,7 +132,7 @@ def main():
         S2 --> G2
         S3 --> G3
     """
-    render_mermaid(medallion_diagram, height=420)
+    render_mermaid(medallion_diagram, height=550)
 
     st.markdown("")  # Spacer
     col1, col2, col3 = st.columns(3)
@@ -190,7 +190,7 @@ def main():
             float energy_mwh
         }
     """
-    render_mermaid(data_model_diagram, height=450)
+    render_mermaid(data_model_diagram, height=600)
 
     st.markdown("")  # Spacer
     st.markdown("""
