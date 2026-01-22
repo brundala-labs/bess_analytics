@@ -284,6 +284,17 @@ def create_views(conn: duckdb.DuckDBPyConnection):
         LEFT JOIN v_data_quality_daily dq ON rvf.site_id = dq.site_id AND rvf.date = dq.date
     """)
 
+    # View: Response time from telemetry (comms_latency_ms -> seconds)
+    conn.execute("""
+        CREATE OR REPLACE VIEW v_response_time AS
+        SELECT
+            site_id,
+            AVG(value) / 1000.0 as avg_response_sec
+        FROM fact_telemetry
+        WHERE tag = 'comms_latency_ms'
+        GROUP BY site_id
+    """)
+
     # View: SLA compliance
     conn.execute("""
         CREATE OR REPLACE VIEW v_sla_compliance AS
@@ -297,6 +308,7 @@ def create_views(conn: duckdb.DuckDBPyConnection):
             CASE sla.metric_name
                 WHEN 'availability_pct' THEN AVG(a.availability_pct)
                 WHEN 'comms_uptime_pct' THEN AVG(dq.avg_completeness)
+                WHEN 'response_time_sec' THEN AVG(rt.avg_response_sec)
                 ELSE NULL
             END as actual_value,
             CASE
@@ -304,12 +316,15 @@ def create_views(conn: duckdb.DuckDBPyConnection):
                     AND AVG(a.availability_pct) < sla.threshold THEN 'BREACH'
                 WHEN sla.metric_name = 'comms_uptime_pct'
                     AND AVG(dq.avg_completeness) < sla.threshold THEN 'BREACH'
+                WHEN sla.metric_name = 'response_time_sec'
+                    AND AVG(rt.avg_response_sec) > sla.threshold THEN 'BREACH'
                 ELSE 'COMPLIANT'
             END as status
         FROM dim_sla sla
         JOIN dim_site s ON sla.site_id = s.site_id
         LEFT JOIN v_site_availability a ON sla.site_id = a.site_id
         LEFT JOIN v_data_quality_daily dq ON sla.site_id = dq.site_id
+        LEFT JOIN v_response_time rt ON sla.site_id = rt.site_id
         GROUP BY sla.sla_id, sla.site_id, s.name, sla.metric_name, sla.threshold, sla.penalty_rate_per_hour
     """)
 
