@@ -83,7 +83,7 @@ def main():
         GOLD --> API
         API --> BI
     """
-    render_mermaid(cloud_diagram, height=750)
+    render_mermaid(cloud_diagram, height=1220)
 
     st.markdown("")  # Spacer
     col1, col2 = st.columns(2)
