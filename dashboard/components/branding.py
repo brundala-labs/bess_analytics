@@ -228,25 +228,26 @@ def render_sidebar_branding():
             padding-top: 1rem !important;
         }}
 
-        /* Reduce expander padding */
+        /* Expander styling - no box */
         [data-testid="stSidebar"] .streamlit-expanderHeader {{
-            padding: 0.3rem 0.4rem;
-            font-size: 0.8rem;
-            background: {ENKA_LIGHT_GRAY};
-            border-radius: 4px;
-            margin-bottom: 1px;
+            padding: 0.3rem 0;
+            font-size: 0.9rem;
+            background: transparent !important;
+            border: none !important;
+            box-shadow: none !important;
         }}
 
         [data-testid="stSidebar"] .streamlit-expanderContent {{
-            padding: 0.2rem 0;
+            padding: 0.2rem 0 0.2rem 0.5rem;
         }}
 
-        /* Compact nav buttons - left aligned */
+        /* Nav buttons - no box, consistent font */
         [data-testid="stSidebar"] .stButton > button {{
-            background: transparent;
-            border: none;
+            background: transparent !important;
+            border: none !important;
+            box-shadow: none !important;
             color: {ENKA_DARK};
-            font-size: 0.85rem;
+            font-size: 0.9rem;
             padding: 0.3rem 0;
             text-align: left !important;
             justify-content: flex-start !important;
@@ -256,22 +257,23 @@ def render_sidebar_branding():
 
         [data-testid="stSidebar"] .stButton > button p {{
             text-align: left !important;
+            font-size: 0.9rem;
         }}
 
         [data-testid="stSidebar"] .stButton > button:hover {{
-            background: rgba(129, 215, 66, 0.15);
-            color: {ENKA_ACCENT_GREEN};
+            background: transparent !important;
+            color: {ENKA_GREEN};
         }}
 
-        /* Section headers - left aligned */
+        /* Section headers */
         .nav-section {{
-            font-size: 0.7rem;
+            font-size: 0.75rem;
             font-weight: 600;
             color: {ENKA_GRAY};
             text-transform: uppercase;
             letter-spacing: 0.5px;
-            padding: 0.4rem 0.4rem 0.2rem;
-            margin-top: 0.3rem;
+            padding: 0.5rem 0 0.2rem;
+            margin-top: 0.5rem;
             text-align: left;
         }}
 
