@@ -205,12 +205,80 @@ def apply_enka_theme():
 
 def render_sidebar_branding():
     """Render custom sidebar navigation with expandable sections."""
-    # Hide default Streamlit navigation
-    st.markdown("""
+    # Hide default nav and add compact styling
+    st.markdown(f"""
     <style>
-        [data-testid="stSidebarNav"] {
+        [data-testid="stSidebarNav"] {{
             display: none;
-        }
+        }}
+
+        /* Compact sidebar */
+        [data-testid="stSidebar"] > div:first-child {{
+            padding-top: 1rem;
+        }}
+
+        /* Reduce expander padding */
+        [data-testid="stSidebar"] .streamlit-expanderHeader {{
+            padding: 0.4rem 0.5rem;
+            font-size: 0.9rem;
+            background: {ENKA_LIGHT_GRAY};
+            border-radius: 4px;
+            margin-bottom: 2px;
+        }}
+
+        [data-testid="stSidebar"] .streamlit-expanderContent {{
+            padding: 0.25rem 0;
+        }}
+
+        /* Compact nav links */
+        .nav-link {{
+            display: block;
+            padding: 0.35rem 0.75rem;
+            margin: 1px 0;
+            color: {ENKA_DARK};
+            text-decoration: none;
+            font-size: 0.85rem;
+            border-radius: 4px;
+            transition: all 0.2s;
+        }}
+
+        .nav-link:hover {{
+            background: rgba(129, 215, 66, 0.15);
+            color: {ENKA_ACCENT_GREEN};
+        }}
+
+        /* Section headers */
+        .nav-section {{
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: {ENKA_GRAY};
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            padding: 0.5rem 0.5rem 0.25rem;
+            margin-top: 0.5rem;
+        }}
+
+        /* Home link styling */
+        .home-link {{
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: {ENKA_DARK};
+            text-decoration: none;
+            font-size: 1rem;
+        }}
+
+        .home-link:hover {{
+            color: {ENKA_GREEN};
+        }}
+
+        /* Reduce divider margins */
+        [data-testid="stSidebar"] hr {{
+            margin: 0.5rem 0;
+        }}
     </style>
     """, unsafe_allow_html=True)
 
@@ -218,51 +286,46 @@ def render_sidebar_branding():
     dashboards = {
         "ENKA": [
             ("Portfolio Executive Cockpit", "03_Portfolio_Executive_Cockpit"),
-            ("Partner Monetization And Revenue Share", "04_Partner_Monetization_And_Revenue_Share"),
-            ("RTM Settlement Reconciliation", "05_RTM_Settlement_Reconciliation"),
-            ("Lifecycle And Augmentation Planning", "06_Lifecycle_And_Augmentation_Planning"),
-            ("Development Pipeline Tracking", "07_Development_Pipeline_Tracking"),
+            ("Partner Monetization", "04_Partner_Monetization_And_Revenue_Share"),
+            ("RTM Settlement", "05_RTM_Settlement_Reconciliation"),
+            ("Lifecycle Planning", "06_Lifecycle_And_Augmentation_Planning"),
+            ("Development Pipeline", "07_Development_Pipeline_Tracking"),
         ],
         "TMEIC": [
-            ("PCS Controller Real Time Operations", "08_PCS_Controller_Real_Time_Operations"),
-            ("Controller Health And Communications", "09_Controller_Health_And_Communications"),
-            ("Faults And Trips Timeline", "10_Faults_And_Trips_Timeline"),
-            ("Grid Performance And Compliance", "11_Grid_Performance_And_Compliance"),
+            ("PCS Real Time Ops", "08_PCS_Controller_Real_Time_Operations"),
+            ("Controller Health", "09_Controller_Health_And_Communications"),
+            ("Faults And Trips", "10_Faults_And_Trips_Timeline"),
+            ("Grid Performance", "11_Grid_Performance_And_Compliance"),
             ("Historian Explorer", "12_Historian_Explorer"),
         ],
         "Combined": [
-            ("Revenue Loss Attribution", "13_Revenue_Loss_Attribution"),
-            ("Dispatch Versus Asset Stress", "14_Dispatch_Versus_Asset_Stress"),
-            ("SLA And Warranty Evidence Pack", "15_SLA_And_Warranty_Evidence_Pack"),
-            ("Portfolio Benchmarking", "16_Portfolio_Benchmarking_By_Vendor_And_Site"),
+            ("Revenue Loss", "13_Revenue_Loss_Attribution"),
+            ("Dispatch vs Stress", "14_Dispatch_Versus_Asset_Stress"),
+            ("SLA And Warranty", "15_SLA_And_Warranty_Evidence_Pack"),
+            ("Portfolio Benchmark", "16_Portfolio_Benchmarking_By_Vendor_And_Site"),
         ],
     }
 
     reference_docs = [
-        ("Architecture And Data Flow", "01_Architecture_And_Data_Flow"),
-        ("Proposal Executive Summary", "02_Proposal_Executive_Summary"),
+        ("Architecture", "01_Architecture_And_Data_Flow"),
+        ("Proposal", "02_Proposal_Executive_Summary"),
     ]
 
     # Home link
-    st.sidebar.markdown(f"### [⚡ Home](./)")
+    st.sidebar.markdown(f'<a href="./" class="home-link">⚡ ENKA BESS Analytics</a>', unsafe_allow_html=True)
 
-    # Reference documents section (at top)
-    st.sidebar.markdown("---")
-    with st.sidebar.expander("Reference (2)", expanded=False):
-        for title, page_key in reference_docs:
-            if st.button(f"📄 {title}", key=f"nav_{page_key}", use_container_width=True):
-                st.switch_page(f"pages/{page_key}.py")
+    # Reference section
+    st.sidebar.markdown('<div class="nav-section">Reference</div>', unsafe_allow_html=True)
+    for title, page_key in reference_docs:
+        st.sidebar.markdown(f'<a href="./{page_key}" class="nav-link">📄 {title}</a>', unsafe_allow_html=True)
 
     # Dashboards section
-    st.sidebar.markdown("---")
-    st.sidebar.markdown("### Dashboards")
+    st.sidebar.markdown('<div class="nav-section">Dashboards</div>', unsafe_allow_html=True)
 
-    # Render each category as expander
     for category, pages in dashboards.items():
         with st.sidebar.expander(f"{category} ({len(pages)})", expanded=False):
             for title, page_key in pages:
-                if st.button(f"📊 {title}", key=f"nav_{page_key}", use_container_width=True):
-                    st.switch_page(f"pages/{page_key}.py")
+                st.markdown(f'<a href="./{page_key}" class="nav-link">› {title}</a>', unsafe_allow_html=True)
 
 
 def render_footer():
