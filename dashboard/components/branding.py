@@ -91,7 +91,7 @@ def apply_enka_theme():
 
         /* Green accent for headers */
         h1, h2, h3, h4 {{
-            color: {ENKA_GREEN} !important;
+            color: {ENKA_ACCENT_GREEN} !important;
         }}
 
         /* Primary buttons */
