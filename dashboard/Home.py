@@ -19,11 +19,19 @@ st.set_page_config(page_title="ENKA BESS Analytics Platform", page_icon="⚡", l
 apply_enka_theme()
 render_sidebar_branding()
 
-# Add Google Material Icons
+# Add Google Material Icons with custom styling
 st.markdown("""
 <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
 <style>
-.material-icons { vertical-align: middle; margin-right: 8px; }
+.material-icons {
+    vertical-align: middle;
+    margin-right: 10px;
+    font-size: 32px;
+}
+h1 .material-icons { font-size: 40px; }
+h2 .material-icons { font-size: 32px; }
+h1 { font-size: 2.5rem !important; }
+h2 { font-size: 1.8rem !important; font-weight: 600; margin-top: 2rem; }
 </style>
 """, unsafe_allow_html=True)
 
