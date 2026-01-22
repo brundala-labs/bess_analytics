@@ -306,11 +306,6 @@ def render_sidebar_branding():
     if st.sidebar.button("⚡ ENKA BESS", key="nav_home", use_container_width=True):
         st.switch_page("Home.py")
 
-    # Reference section
-    st.sidebar.markdown('<div class="nav-section">Reference</div>', unsafe_allow_html=True)
-    if st.sidebar.button("🏗 Architecture", key="nav_arch", use_container_width=True):
-        st.switch_page("pages/01_Architecture_And_Data_Flow.py")
-
     # Dashboards section
     st.sidebar.markdown('<div class="nav-section">Dashboards</div>', unsafe_allow_html=True)
 
