@@ -71,14 +71,17 @@ def render_mermaid(mermaid_code: str, height: int = 400):
                 clusterBkg: '#f8f9fa',
                 clusterBorder: '#81d742',
                 titleColor: '#111111',
-                edgeLabelBackground: '#ffffff'
+                edgeLabelBackground: '#ffffff',
+                fontSize: '18px',
+                fontFamily: 'sans-serif'
             }},
             flowchart: {{
                 curve: 'basis',
                 padding: 20,
                 nodeSpacing: 50,
                 rankSpacing: 80,
-                htmlLabels: true
+                htmlLabels: true,
+                defaultRenderer: 'dagre-wrapper'
             }}
         }});
     </script>
