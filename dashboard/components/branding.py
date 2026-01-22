@@ -309,7 +309,7 @@ def render_sidebar_branding():
     }
 
     # Home button
-    if st.sidebar.button("⚡ ENKA BESS", key="nav_home", use_container_width=True):
+    if st.sidebar.button("⚡ ENKA BESS Analytics", key="nav_home", use_container_width=True):
         st.switch_page("Home.py")
 
     # Architecture
