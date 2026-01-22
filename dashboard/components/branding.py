@@ -312,10 +312,6 @@ def render_sidebar_branding():
     if st.sidebar.button("⚡ ENKA BESS Analytics", key="nav_home", use_container_width=True):
         st.switch_page("Home.py")
 
-    # Architecture
-    if st.sidebar.button("🏗 Architecture", key="nav_arch", use_container_width=True):
-        st.switch_page("pages/01_Architecture_And_Data_Flow.py")
-
     # Dashboards section
     st.sidebar.markdown('<div class="nav-section">Dashboards</div>', unsafe_allow_html=True)
 
