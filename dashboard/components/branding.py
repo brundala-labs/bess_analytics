@@ -308,7 +308,7 @@ def render_sidebar_branding():
     }
 
     # Home button
-    if st.sidebar.button("⚡ ENKA BESS Analytics Platform", key="nav_home", use_container_width=True):
+    if st.sidebar.button("⚡ BESS Analytics Platform", key="nav_home", use_container_width=True):
         st.switch_page("Home.py")
 
     # Dashboards section

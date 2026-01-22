@@ -14,7 +14,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from dashboard.components.branding import apply_enka_theme, render_sidebar_branding, render_footer, ENKA_GREEN
 
-st.set_page_config(page_title="ENKA BESS Analytics Platform", page_icon="⚡", layout="wide")
+st.set_page_config(page_title="BESS Analytics Platform", page_icon="⚡", layout="wide")
 
 apply_enka_theme()
 render_sidebar_branding()
@@ -89,7 +89,7 @@ def render_mermaid(mermaid_code: str, height: int = 400):
     components.html(html, height=height, scrolling=False)
 
 
-st.markdown('<h1><span class="material-icons">architecture</span> ENKA BESS Analytics Platform</h1>', unsafe_allow_html=True)
+st.markdown('<h1><span class="material-icons">architecture</span> BESS Analytics Platform</h1>', unsafe_allow_html=True)
 st.caption("AWS cloud architecture, Medallion data pipeline, and canonical data model")
 
 # Section 1: Cloud Streaming Architecture
