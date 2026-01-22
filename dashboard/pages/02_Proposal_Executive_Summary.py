@@ -12,7 +12,6 @@ import streamlit as st
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 from dashboard.components.branding import apply_enka_theme, render_sidebar_branding, render_footer, ENKA_GREEN, ENKA_DARK
-from dashboard.components.header import load_catalog
 
 st.set_page_config(page_title="Proposal Executive Summary", page_icon="📋", layout="wide")
 
@@ -28,24 +27,6 @@ def main():
     Battery Energy Storage System (BESS) Analytics Platform
     </p>
     """, unsafe_allow_html=True)
-
-    # Load catalog for dashboard stats
-    catalog = load_catalog()
-    dashboards = catalog.get("dashboards", {})
-    enka_count = sum(1 for d in dashboards.values() if d.get("pack") == "ENKA")
-    tmeic_count = sum(1 for d in dashboards.values() if d.get("pack") == "TMEIC")
-    combined_count = sum(1 for d in dashboards.values() if d.get("pack") == "Combined")
-
-    # Dashboard Stats
-    col1, col2, col3, col4 = st.columns(4)
-    with col1:
-        st.metric("Total Dashboards", len(dashboards))
-    with col2:
-        st.metric("ENKA", enka_count)
-    with col3:
-        st.metric("TMEIC", tmeic_count)
-    with col4:
-        st.metric("Combined", combined_count)
 
     # Problem Statement
     st.header("🎯 Problem Statement")
