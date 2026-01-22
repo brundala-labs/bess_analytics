@@ -72,7 +72,7 @@ def render_mermaid(mermaid_code: str, height: int = 400):
                 clusterBorder: '#81d742',
                 titleColor: '#111111',
                 edgeLabelBackground: '#ffffff',
-                fontSize: '18px',
+                fontSize: '22px',
                 fontFamily: 'sans-serif'
             }},
             flowchart: {{
