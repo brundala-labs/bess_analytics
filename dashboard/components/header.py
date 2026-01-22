@@ -52,6 +52,10 @@ def format_kpi_value(value: Any, format_type: str) -> str:
             return f"{value/1_000:.1f}K"
         else:
             return f"{value:.1f}"
+    elif format_type == "mwh":
+        return f"{value:,.0f} MWh"
+    elif format_type == "mw":
+        return f"{value:,.0f} MW"
     elif format_type == "text":
         return str(value)
     else:

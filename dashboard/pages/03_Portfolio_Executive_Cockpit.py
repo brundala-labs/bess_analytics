@@ -138,12 +138,12 @@ def main():
 
     # Calculate KPI values
     kpi_values = {
-        "portfolio_revenue_mtd_gbp": portfolio["revenue_mtd"].sum(),
+        "total_capacity_mwh": portfolio["bess_mwh"].sum(),
         "portfolio_availability_pct": portfolio["availability"].mean(),
-        "total_energy_mwh": portfolio["bess_mwh"].sum(),
-        "active_fault_count": int(portfolio["active_faults"].sum()),
-        "sites_below_target": int((portfolio["availability"] < 95).sum()),
+        "mtd_revenue_gbp": portfolio["revenue_mtd"].sum(),
+        "active_faults": int(portfolio["active_faults"].sum()),
         "avg_soh_pct": portfolio["avg_soh"].mean(),
+        "revenue_at_risk_gbp": portfolio[portfolio["availability"] < 95]["revenue_mtd"].sum() * 0.1,
     }
 
     # Get dashboard config
