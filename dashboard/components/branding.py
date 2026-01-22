@@ -290,8 +290,8 @@ def render_sidebar_branding():
     }
 
     reference_docs = [
-        ("Architecture", "01_Architecture_And_Data_Flow"),
-        ("Proposal", "02_Proposal_Executive_Summary"),
+        ("🏗 Architecture", "01_Architecture_And_Data_Flow"),
+        ("📋 Proposal", "02_Proposal_Executive_Summary"),
     ]
 
     # Home button
@@ -301,7 +301,7 @@ def render_sidebar_branding():
     # Reference section
     st.sidebar.markdown('<div class="nav-section">Reference</div>', unsafe_allow_html=True)
     for title, page_key in reference_docs:
-        if st.sidebar.button(f"📄 {title}", key=f"nav_{page_key}", use_container_width=True):
+        if st.sidebar.button(title, key=f"nav_{page_key}", use_container_width=True):
             st.switch_page(f"pages/{page_key}.py")
 
     # Dashboards section

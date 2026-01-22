@@ -24,14 +24,14 @@ def render_mermaid(mermaid_code: str, height: int = 400):
     """Render a Mermaid diagram."""
     html = f"""
     <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
-    <div class="mermaid" style="display: flex; justify-content: center;">
+    <div class="mermaid" style="display: flex; justify-content: center; overflow: auto; padding: 10px;">
     {mermaid_code}
     </div>
     <script>
-        mermaid.initialize({{ startOnLoad: true, theme: 'default' }});
+        mermaid.initialize({{ startOnLoad: true, theme: 'default', securityLevel: 'loose' }});
     </script>
     """
-    components.html(html, height=height)
+    components.html(html, height=height, scrolling=True)
 
 
 def main():
@@ -83,8 +83,9 @@ def main():
         GOLD --> API
         API --> BI
     """
-    render_mermaid(cloud_diagram, height=500)
+    render_mermaid(cloud_diagram, height=550)
 
+    st.markdown("")  # Spacer
     col1, col2 = st.columns(2)
     with col1:
         st.markdown("**Key Components:**")
@@ -131,8 +132,9 @@ def main():
         S2 --> G2
         S3 --> G3
     """
-    render_mermaid(medallion_diagram, height=300)
+    render_mermaid(medallion_diagram, height=350)
 
+    st.markdown("")  # Spacer
     col1, col2, col3 = st.columns(3)
     with col1:
         with st.container(border=True):
@@ -188,8 +190,9 @@ def main():
             float energy_mwh
         }
     """
-    render_mermaid(data_model_diagram, height=400)
+    render_mermaid(data_model_diagram, height=450)
 
+    st.markdown("")  # Spacer
     st.markdown("""
     **Star Schema Design:**
     - **Dimensions**: Site, Asset, Service, Partner, SLA
