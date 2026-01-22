@@ -28,10 +28,10 @@ st.markdown("""
     margin-right: 10px;
     font-size: 32px;
 }
-h1 .material-icons { font-size: 40px; }
-h2 .material-icons { font-size: 32px; }
-h1 { font-size: 2.5rem !important; }
-h2 { font-size: 1.8rem !important; font-weight: 600; margin-top: 2rem; }
+h1 .material-icons { font-size: 44px; }
+h2 .material-icons { font-size: 36px; }
+h1 { font-size: 2.8rem !important; }
+h2 { font-size: 2.2rem !important; font-weight: 600; margin-top: 2rem; }
 </style>
 """, unsafe_allow_html=True)
 
