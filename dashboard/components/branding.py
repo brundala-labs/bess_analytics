@@ -246,12 +246,16 @@ def render_sidebar_branding():
             background: transparent;
             border: none;
             color: {ENKA_DARK};
-            font-size: 0.8rem;
-            padding: 0.25rem 0.4rem;
+            font-size: 0.85rem;
+            padding: 0.3rem 0;
             text-align: left !important;
             justify-content: flex-start !important;
             width: 100%;
             font-weight: normal;
+        }}
+
+        [data-testid="stSidebar"] .stButton > button p {{
+            text-align: left !important;
         }}
 
         [data-testid="stSidebar"] .stButton > button:hover {{
@@ -306,8 +310,7 @@ def render_sidebar_branding():
     if st.sidebar.button("⚡ ENKA BESS", key="nav_home", use_container_width=True):
         st.switch_page("Home.py")
 
-    # Main menu
-    st.sidebar.markdown('<div class="nav-section">Menu</div>', unsafe_allow_html=True)
+    # Architecture
     if st.sidebar.button("🏗 Architecture", key="nav_arch", use_container_width=True):
         st.switch_page("pages/01_Architecture_And_Data_Flow.py")
 
