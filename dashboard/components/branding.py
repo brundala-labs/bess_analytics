@@ -230,19 +230,19 @@ def render_sidebar_branding():
             padding: 0.25rem 0;
         }}
 
-        /* Compact nav links */
-        .nav-link {{
-            display: block;
-            padding: 0.35rem 0.75rem;
-            margin: 1px 0;
+        /* Compact nav buttons */
+        [data-testid="stSidebar"] .stButton > button {{
+            background: transparent;
+            border: none;
             color: {ENKA_DARK};
-            text-decoration: none;
             font-size: 0.85rem;
-            border-radius: 4px;
-            transition: all 0.2s;
+            padding: 0.3rem 0.5rem;
+            text-align: left;
+            width: 100%;
+            font-weight: normal;
         }}
 
-        .nav-link:hover {{
+        [data-testid="stSidebar"] .stButton > button:hover {{
             background: rgba(129, 215, 66, 0.15);
             color: {ENKA_ACCENT_GREEN};
         }}
@@ -256,23 +256,6 @@ def render_sidebar_branding():
             letter-spacing: 0.5px;
             padding: 0.5rem 0.5rem 0.25rem;
             margin-top: 0.5rem;
-        }}
-
-        /* Home link styling */
-        .home-link {{
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            padding: 0.5rem;
-            margin-bottom: 0.5rem;
-            font-weight: 600;
-            color: {ENKA_DARK};
-            text-decoration: none;
-            font-size: 1rem;
-        }}
-
-        .home-link:hover {{
-            color: {ENKA_GREEN};
         }}
 
         /* Reduce divider margins */
@@ -311,13 +294,15 @@ def render_sidebar_branding():
         ("Proposal", "02_Proposal_Executive_Summary"),
     ]
 
-    # Home link
-    st.sidebar.markdown(f'<a href="./" class="home-link">⚡ ENKA BESS Analytics</a>', unsafe_allow_html=True)
+    # Home button
+    if st.sidebar.button("⚡ ENKA BESS Analytics", key="nav_home", use_container_width=True):
+        st.switch_page("Home.py")
 
     # Reference section
     st.sidebar.markdown('<div class="nav-section">Reference</div>', unsafe_allow_html=True)
     for title, page_key in reference_docs:
-        st.sidebar.markdown(f'<a href="./{page_key}" class="nav-link">📄 {title}</a>', unsafe_allow_html=True)
+        if st.sidebar.button(f"📄 {title}", key=f"nav_{page_key}", use_container_width=True):
+            st.switch_page(f"pages/{page_key}.py")
 
     # Dashboards section
     st.sidebar.markdown('<div class="nav-section">Dashboards</div>', unsafe_allow_html=True)
@@ -325,7 +310,8 @@ def render_sidebar_branding():
     for category, pages in dashboards.items():
         with st.sidebar.expander(f"{category} ({len(pages)})", expanded=False):
             for title, page_key in pages:
-                st.markdown(f'<a href="./{page_key}" class="nav-link">› {title}</a>', unsafe_allow_html=True)
+                if st.button(f"› {title}", key=f"nav_{page_key}", use_container_width=True):
+                    st.switch_page(f"pages/{page_key}.py")
 
 
 def render_footer():
