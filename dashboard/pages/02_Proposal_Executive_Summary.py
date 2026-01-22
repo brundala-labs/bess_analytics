@@ -11,7 +11,8 @@ import streamlit as st
 
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
-from dashboard.components.branding import apply_enka_theme, render_sidebar_branding, render_footer
+from dashboard.components.branding import apply_enka_theme, render_sidebar_branding, render_footer, ENKA_GREEN, ENKA_DARK
+from dashboard.components.header import load_catalog
 
 st.set_page_config(page_title="Proposal Executive Summary", page_icon="📋", layout="wide")
 
@@ -20,8 +21,31 @@ render_sidebar_branding()
 
 
 def main():
-    st.title("📋 Proposal Executive Summary")
-    st.caption("BESS Analytics Platform - Objectives, scope, and roadmap")
+    st.title("📋 ENKA BESS Analytics")
+    st.markdown(f"""
+    <p style="font-size: 1.1rem; color: {ENKA_DARK};">
+    <span style="color: {ENKA_GREEN}; font-weight: bold;">ENKA Energy Transition</span> -
+    Battery Energy Storage System (BESS) Analytics Platform
+    </p>
+    """, unsafe_allow_html=True)
+
+    # Load catalog for dashboard stats
+    catalog = load_catalog()
+    dashboards = catalog.get("dashboards", {})
+    enka_count = sum(1 for d in dashboards.values() if d.get("pack") == "ENKA")
+    tmeic_count = sum(1 for d in dashboards.values() if d.get("pack") == "TMEIC")
+    combined_count = sum(1 for d in dashboards.values() if d.get("pack") == "Combined")
+
+    # Dashboard Stats
+    col1, col2, col3, col4 = st.columns(4)
+    with col1:
+        st.metric("Total Dashboards", len(dashboards))
+    with col2:
+        st.metric("ENKA", enka_count)
+    with col3:
+        st.metric("TMEIC", tmeic_count)
+    with col4:
+        st.metric("Combined", combined_count)
 
     # Problem Statement
     st.header("🎯 Problem Statement")
@@ -88,6 +112,28 @@ def main():
                 st.markdown(f"**{pack}**")
                 for page in pages:
                     st.caption(f"• {page}")
+
+    # System Information
+    st.header("🔧 System Information")
+    col1, col2 = st.columns(2)
+    with col1:
+        with st.container(border=True):
+            st.markdown("**Data Sources**")
+            st.markdown("""
+- **TMEIC Controller** - PCS/Plant Control telemetry
+- **BMS** - Battery Management System data
+- **ENKA EMS/SCADA** - Events and dispatch
+- **RTM Settlement** - Market settlement data
+- **ENKA CMMS** - Maintenance records
+            """)
+    with col2:
+        with st.container(border=True):
+            st.markdown("**Data Architecture**")
+            st.markdown("""
+- **Bronze Layer** - Raw JSONL micro-batches
+- **Silver Layer** - Cleaned Parquet tables
+- **Gold Layer** - Aggregate rollups
+            """)
 
     # Roadmap
     st.header("🗺️ Roadmap")

@@ -290,8 +290,8 @@ def render_sidebar_branding():
     }
 
     reference_docs = [
-        ("🏗 Architecture", "01_Architecture_And_Data_Flow"),
         ("📋 Proposal", "02_Proposal_Executive_Summary"),
+        ("🏗 Architecture", "01_Architecture_And_Data_Flow"),
     ]
 
     # Home button
