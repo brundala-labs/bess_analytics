@@ -212,32 +212,44 @@ def render_sidebar_branding():
             display: none;
         }}
 
-        /* Compact sidebar */
+        /* Narrower sidebar */
+        [data-testid="stSidebar"] {{
+            width: 220px !important;
+            min-width: 220px !important;
+        }}
+
         [data-testid="stSidebar"] > div:first-child {{
-            padding-top: 1rem;
+            width: 220px !important;
+            padding-top: 0.5rem;
+        }}
+
+        /* Remove main content top padding */
+        .main .block-container {{
+            padding-top: 1rem !important;
         }}
 
         /* Reduce expander padding */
         [data-testid="stSidebar"] .streamlit-expanderHeader {{
-            padding: 0.4rem 0.5rem;
-            font-size: 0.9rem;
+            padding: 0.3rem 0.4rem;
+            font-size: 0.8rem;
             background: {ENKA_LIGHT_GRAY};
             border-radius: 4px;
-            margin-bottom: 2px;
+            margin-bottom: 1px;
         }}
 
         [data-testid="stSidebar"] .streamlit-expanderContent {{
-            padding: 0.25rem 0;
+            padding: 0.2rem 0;
         }}
 
-        /* Compact nav buttons */
+        /* Compact nav buttons - left aligned */
         [data-testid="stSidebar"] .stButton > button {{
             background: transparent;
             border: none;
             color: {ENKA_DARK};
-            font-size: 0.85rem;
-            padding: 0.3rem 0.5rem;
-            text-align: left;
+            font-size: 0.8rem;
+            padding: 0.25rem 0.4rem;
+            text-align: left !important;
+            justify-content: flex-start !important;
             width: 100%;
             font-weight: normal;
         }}
@@ -247,20 +259,21 @@ def render_sidebar_branding():
             color: {ENKA_ACCENT_GREEN};
         }}
 
-        /* Section headers */
+        /* Section headers - left aligned */
         .nav-section {{
-            font-size: 0.75rem;
+            font-size: 0.7rem;
             font-weight: 600;
             color: {ENKA_GRAY};
             text-transform: uppercase;
             letter-spacing: 0.5px;
-            padding: 0.5rem 0.5rem 0.25rem;
-            margin-top: 0.5rem;
+            padding: 0.4rem 0.4rem 0.2rem;
+            margin-top: 0.3rem;
+            text-align: left;
         }}
 
         /* Reduce divider margins */
         [data-testid="stSidebar"] hr {{
-            margin: 0.5rem 0;
+            margin: 0.3rem 0;
         }}
     </style>
     """, unsafe_allow_html=True)
@@ -268,41 +281,35 @@ def render_sidebar_branding():
     # Dashboard structure
     dashboards = {
         "ENKA": [
-            ("Portfolio Executive Cockpit", "03_Portfolio_Executive_Cockpit"),
+            ("Portfolio Cockpit", "03_Portfolio_Executive_Cockpit"),
             ("Partner Monetization", "04_Partner_Monetization_And_Revenue_Share"),
             ("RTM Settlement", "05_RTM_Settlement_Reconciliation"),
             ("Lifecycle Planning", "06_Lifecycle_And_Augmentation_Planning"),
-            ("Development Pipeline", "07_Development_Pipeline_Tracking"),
+            ("Dev Pipeline", "07_Development_Pipeline_Tracking"),
         ],
         "TMEIC": [
-            ("PCS Real Time Ops", "08_PCS_Controller_Real_Time_Operations"),
+            ("PCS Real Time", "08_PCS_Controller_Real_Time_Operations"),
             ("Controller Health", "09_Controller_Health_And_Communications"),
-            ("Faults And Trips", "10_Faults_And_Trips_Timeline"),
+            ("Faults & Trips", "10_Faults_And_Trips_Timeline"),
             ("Grid Performance", "11_Grid_Performance_And_Compliance"),
-            ("Historian Explorer", "12_Historian_Explorer"),
+            ("Historian", "12_Historian_Explorer"),
         ],
         "Combined": [
             ("Revenue Loss", "13_Revenue_Loss_Attribution"),
             ("Dispatch vs Stress", "14_Dispatch_Versus_Asset_Stress"),
-            ("SLA And Warranty", "15_SLA_And_Warranty_Evidence_Pack"),
-            ("Portfolio Benchmark", "16_Portfolio_Benchmarking_By_Vendor_And_Site"),
+            ("SLA & Warranty", "15_SLA_And_Warranty_Evidence_Pack"),
+            ("Benchmarking", "16_Portfolio_Benchmarking_By_Vendor_And_Site"),
         ],
     }
 
-    reference_docs = [
-        ("📋 Proposal", "02_Proposal_Executive_Summary"),
-        ("🏗 Architecture", "01_Architecture_And_Data_Flow"),
-    ]
-
     # Home button
-    if st.sidebar.button("⚡ ENKA BESS Analytics", key="nav_home", use_container_width=True):
+    if st.sidebar.button("⚡ ENKA BESS", key="nav_home", use_container_width=True):
         st.switch_page("Home.py")
 
     # Reference section
     st.sidebar.markdown('<div class="nav-section">Reference</div>', unsafe_allow_html=True)
-    for title, page_key in reference_docs:
-        if st.sidebar.button(title, key=f"nav_{page_key}", use_container_width=True):
-            st.switch_page(f"pages/{page_key}.py")
+    if st.sidebar.button("🏗 Architecture", key="nav_arch", use_container_width=True):
+        st.switch_page("pages/01_Architecture_And_Data_Flow.py")
 
     # Dashboards section
     st.sidebar.markdown('<div class="nav-section">Dashboards</div>', unsafe_allow_html=True)

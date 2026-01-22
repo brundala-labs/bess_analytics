@@ -132,7 +132,7 @@ def main():
         S2 --> G2
         S3 --> G3
     """
-    render_mermaid(medallion_diagram, height=350)
+    render_mermaid(medallion_diagram, height=420)
 
     st.markdown("")  # Spacer
     col1, col2, col3 = st.columns(3)
