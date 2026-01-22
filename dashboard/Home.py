@@ -113,12 +113,10 @@ flowchart TB
     end
 
     subgraph AWS["☁️ AWS Cloud Platform"]
-        subgraph Storage["🗄️ S3 Data Lake"]
-            subgraph Lake["Medallion Architecture"]
-                BRONZE["🥉 Bronze<br/><small>Raw Data</small>"]
-                SILVER["🥈 Silver<br/><small>Cleaned & Validated</small>"]
-                GOLD["🥇 Gold<br/><small>Curated KPIs</small>"]
-            end
+        subgraph Lake["🗄️ Medallion Architecture"]
+            BRONZE["🥉 Bronze<br/><small>Raw Data</small>"]
+            SILVER["🥈 Silver<br/><small>Cleaned & Validated</small>"]
+            GOLD["🥇 Gold<br/><small>Curated KPIs</small>"]
         end
         subgraph Compute["⚙️ AWS Databricks"]
             STREAM["🌊 Structured Streaming<br/><small>Real-Time Processing</small>"]
