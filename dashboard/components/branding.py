@@ -267,10 +267,9 @@ def render_sidebar_branding():
 
         /* Section headers */
         .nav-section {{
-            font-size: 0.75rem;
+            font-size: 0.9rem;
             font-weight: 600;
             color: {ENKA_GRAY};
-            text-transform: uppercase;
             letter-spacing: 0.5px;
             padding: 0.5rem 0 0.2rem;
             margin-top: 0.5rem;
@@ -309,7 +308,7 @@ def render_sidebar_branding():
     }
 
     # Home button
-    if st.sidebar.button("⚡ ENKA BESS Analytics", key="nav_home", use_container_width=True):
+    if st.sidebar.button("⚡ ENKA BESS Analytics Platform", key="nav_home", use_container_width=True):
         st.switch_page("Home.py")
 
     # Dashboards section

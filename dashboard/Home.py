@@ -29,14 +29,50 @@ st.markdown("""
 
 
 def render_mermaid(mermaid_code: str, height: int = 400):
-    """Render a Mermaid diagram."""
+    """Render a Mermaid diagram with ENKA styling."""
     html = f"""
     <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
-    <div class="mermaid" style="display: flex; justify-content: center; padding: 10px;">
+    <style>
+        .mermaid {{
+            display: flex;
+            justify-content: center;
+            padding: 20px;
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }}
+    </style>
+    <div class="mermaid">
     {mermaid_code}
     </div>
     <script>
-        mermaid.initialize({{ startOnLoad: true, theme: 'default', securityLevel: 'loose' }});
+        mermaid.initialize({{
+            startOnLoad: true,
+            theme: 'base',
+            securityLevel: 'loose',
+            themeVariables: {{
+                primaryColor: '#81d742',
+                primaryTextColor: '#111111',
+                primaryBorderColor: '#238238',
+                lineColor: '#32373c',
+                secondaryColor: '#e8f5e9',
+                tertiaryColor: '#f0f2f6',
+                background: '#ffffff',
+                mainBkg: '#ffffff',
+                nodeBorder: '#238238',
+                clusterBkg: '#f8f9fa',
+                clusterBorder: '#81d742',
+                titleColor: '#111111',
+                edgeLabelBackground: '#ffffff'
+            }},
+            flowchart: {{
+                curve: 'basis',
+                padding: 20,
+                nodeSpacing: 50,
+                rankSpacing: 80,
+                htmlLabels: true
+            }}
+        }});
     </script>
     """
     components.html(html, height=height, scrolling=False)
@@ -51,41 +87,53 @@ st.markdown("End-to-end data flow from sensors to analytics dashboards using clo
 
 cloud_diagram = """
 flowchart TB
-    subgraph Sources["Data Sources"]
-        TMEIC["TMEIC Controller"]
-        BMS["BMS"]
-        EMS["ENKA EMS/SCADA"]
-        RTM["RTM Settlement"]
-        CMMS["ENKA CMMS"]
-        FINANCE["Contracts & Finance"]
+    subgraph Sources["⚡ Data Sources"]
+        direction TB
+        subgraph Realtime["Real-Time Streaming"]
+            TMEIC["🔌 TMEIC Controller<br/><small>Power & Grid Data</small>"]
+            BMS["🔋 BMS<br/><small>Battery Health</small>"]
+            EMS["📡 ENKA EMS/SCADA<br/><small>Control Events</small>"]
+        end
+        subgraph Batch["Batch Ingestion"]
+            RTM["💰 RTM Settlement<br/><small>Revenue Data</small>"]
+            CMMS["🔧 ENKA CMMS<br/><small>Maintenance</small>"]
+            FINANCE["📊 Contracts & Finance<br/><small>Commercial</small>"]
+        end
     end
-    subgraph AWS["AWS Cloud"]
-        subgraph Storage["S3 Data Lake"]
+
+    subgraph AWS["☁️ AWS Cloud Platform"]
+        subgraph Storage["🗄️ S3 Data Lake"]
             subgraph Lake["Medallion Architecture"]
-                BRONZE["Bronze Layer"]
-                SILVER["Silver Layer"]
-                GOLD["Gold Layer"]
+                BRONZE["🥉 Bronze<br/><small>Raw Data</small>"]
+                SILVER["🥈 Silver<br/><small>Cleaned & Validated</small>"]
+                GOLD["🥇 Gold<br/><small>Curated KPIs</small>"]
             end
         end
-        subgraph Compute["AWS Databricks"]
-            STREAM["Structured Streaming"]
-            DELTA["Delta Lake"]
-            UNITY["Unity Catalog"]
+        subgraph Compute["⚙️ AWS Databricks"]
+            STREAM["🌊 Structured Streaming<br/><small>Real-Time Processing</small>"]
+            DELTA["📦 Delta Lake<br/><small>ACID Transactions</small>"]
+            UNITY["🔐 Unity Catalog<br/><small>Governance</small>"]
         end
     end
-    subgraph Serving["Analytics"]
-        API["FastAPI"]
-        BI["Streamlit Dashboards"]
+
+    subgraph Serving["📈 Analytics & Serving"]
+        API["🚀 FastAPI<br/><small>REST Endpoints</small>"]
+        BI["📊 Streamlit Dashboards<br/><small>Interactive Analytics</small>"]
     end
-    TMEIC -->|Telemetry| BRONZE
-    BMS -->|Telemetry| BRONZE
-    EMS -->|Events| BRONZE
-    RTM -->|Batch| BRONZE
-    CMMS -->|Batch| BRONZE
-    FINANCE -->|Batch| BRONZE
+
+    TMEIC -->|"1-min telemetry"| BRONZE
+    BMS -->|"1-min telemetry"| BRONZE
+    EMS -->|"Events"| BRONZE
+    RTM -->|"Daily batch"| BRONZE
+    CMMS -->|"On-event"| BRONZE
+    FINANCE -->|"On-change"| BRONZE
+
     BRONZE --> STREAM
-    STREAM --> SILVER
+    STREAM --> DELTA
+    DELTA --> SILVER
     SILVER --> GOLD
+    UNITY -.->|"governs"| DELTA
+
     GOLD --> API
     API --> BI
 """
