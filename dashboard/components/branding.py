@@ -212,14 +212,14 @@ def render_sidebar_branding():
             display: none;
         }}
 
-        /* Narrower sidebar */
+        /* Compact sidebar */
         [data-testid="stSidebar"] {{
-            width: 220px !important;
-            min-width: 220px !important;
+            width: 260px !important;
+            min-width: 260px !important;
         }}
 
         [data-testid="stSidebar"] > div:first-child {{
-            width: 220px !important;
+            width: 260px !important;
             padding-top: 0.5rem;
         }}
 
@@ -305,6 +305,11 @@ def render_sidebar_branding():
     # Home button
     if st.sidebar.button("⚡ ENKA BESS", key="nav_home", use_container_width=True):
         st.switch_page("Home.py")
+
+    # Main menu
+    st.sidebar.markdown('<div class="nav-section">Menu</div>', unsafe_allow_html=True)
+    if st.sidebar.button("🏗 Architecture", key="nav_arch", use_container_width=True):
+        st.switch_page("pages/01_Architecture_And_Data_Flow.py")
 
     # Dashboards section
     st.sidebar.markdown('<div class="nav-section">Dashboards</div>', unsafe_allow_html=True)

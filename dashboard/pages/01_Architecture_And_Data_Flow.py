@@ -24,14 +24,14 @@ def render_mermaid(mermaid_code: str, height: int = 400):
     """Render a Mermaid diagram."""
     html = f"""
     <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
-    <div class="mermaid" style="display: flex; justify-content: center; overflow: auto; padding: 10px;">
+    <div class="mermaid" style="display: flex; justify-content: center; padding: 10px;">
     {mermaid_code}
     </div>
     <script>
         mermaid.initialize({{ startOnLoad: true, theme: 'default', securityLevel: 'loose' }});
     </script>
     """
-    components.html(html, height=height, scrolling=True)
+    components.html(html, height=height, scrolling=False)
 
 
 def main():
