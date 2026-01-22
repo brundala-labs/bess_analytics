@@ -14,7 +14,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from dashboard.components.branding import apply_enka_theme, render_sidebar_branding, render_footer, ENKA_GREEN
 
-st.set_page_config(page_title="ENKA BESS Analytics", page_icon="⚡", layout="wide")
+st.set_page_config(page_title="ENKA BESS Analytics Platform", page_icon="⚡", layout="wide")
 
 apply_enka_theme()
 render_sidebar_branding()
@@ -42,8 +42,8 @@ def render_mermaid(mermaid_code: str, height: int = 400):
     components.html(html, height=height, scrolling=False)
 
 
-st.markdown('<h1><span class="material-icons">architecture</span> Architecture And Data Flow</h1>', unsafe_allow_html=True)
-st.caption("Cloud architecture, Medallion data pipeline, and canonical data model")
+st.markdown('<h1><span class="material-icons">architecture</span> ENKA BESS Analytics Platform</h1>', unsafe_allow_html=True)
+st.caption("AWS cloud architecture, Medallion data pipeline, and canonical data model")
 
 # Section 1: Cloud Streaming Architecture
 st.markdown('<h2><span class="material-icons">cloud</span> Cloud Streaming Architecture</h2>', unsafe_allow_html=True)
@@ -59,16 +59,19 @@ flowchart TB
         CMMS["ENKA CMMS"]
         FINANCE["Contracts & Finance"]
     end
-    subgraph Storage["AWS S3 Data Lake"]
-        subgraph Lake["Medallion Architecture"]
-            BRONZE["Bronze Layer"]
-            SILVER["Silver Layer"]
-            GOLD["Gold Layer"]
+    subgraph AWS["AWS Cloud"]
+        subgraph Storage["S3 Data Lake"]
+            subgraph Lake["Medallion Architecture"]
+                BRONZE["Bronze Layer"]
+                SILVER["Silver Layer"]
+                GOLD["Gold Layer"]
+            end
         end
-    end
-    subgraph Compute["Databricks"]
-        STREAM["Structured Streaming"]
-        DELTA["Delta Lake"]
+        subgraph Compute["AWS Databricks"]
+            STREAM["Structured Streaming"]
+            DELTA["Delta Lake"]
+            UNITY["Unity Catalog"]
+        end
     end
     subgraph Serving["Analytics"]
         API["FastAPI"]
@@ -93,16 +96,16 @@ col1, col2 = st.columns(2)
 with col1:
     st.markdown("**Key Components:**")
     st.markdown("""
-- **Data Lake**: AWS S3 (Medallion layers)
-- **Compute**: Databricks Structured Streaming
-- **Storage Format**: Delta Lake
+- **Cloud**: AWS
+- **Data Lake**: S3 (Medallion layers)
+- **Compute**: AWS Databricks
     """)
 with col2:
     st.markdown("**&nbsp;**")
     st.markdown("""
+- **Storage**: Delta Lake
 - **Governance**: Unity Catalog
-- **API**: FastAPI metrics service
-- **Dashboards**: Streamlit
+- **Analytics**: FastAPI + Streamlit
     """)
 
 # Section 2: Medallion Architecture
