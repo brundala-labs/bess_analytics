@@ -14,7 +14,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from dashboard.components.branding import apply_enka_theme, render_sidebar_branding, render_footer, ENKA_GREEN
 
-st.set_page_config(page_title="BESS Analytics Platform", page_icon="⚡", layout="wide")
+st.set_page_config(initial_sidebar_state="expanded", page_title="BESS Analytics Platform", page_icon="⚡", layout="wide")
 
 apply_enka_theme()
 render_sidebar_branding()
@@ -44,10 +44,13 @@ def render_mermaid(mermaid_code: str, height: int = 400):
         .mermaid {{
             display: flex;
             justify-content: center;
-            padding: 20px;
-            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-            border-radius: 12px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            padding: 30px;
+            background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+            border-radius: 16px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        }}
+        .mermaid svg {{
+            max-width: 100%;
         }}
     </style>
     <div class="mermaid">
@@ -62,26 +65,27 @@ def render_mermaid(mermaid_code: str, height: int = 400):
                 primaryColor: '#81d742',
                 primaryTextColor: '#111111',
                 primaryBorderColor: '#238238',
-                lineColor: '#32373c',
+                lineColor: '#555555',
                 secondaryColor: '#e8f5e9',
                 tertiaryColor: '#f0f2f6',
                 background: '#ffffff',
                 mainBkg: '#ffffff',
                 nodeBorder: '#238238',
-                clusterBkg: '#f8f9fa',
-                clusterBorder: '#81d742',
+                clusterBkg: 'transparent',
+                clusterBorder: 'transparent',
                 titleColor: '#111111',
                 edgeLabelBackground: '#ffffff',
-                fontSize: '22px',
-                fontFamily: 'sans-serif'
+                fontSize: '18px',
+                fontFamily: 'system-ui, -apple-system, sans-serif'
             }},
             flowchart: {{
                 curve: 'basis',
-                padding: 20,
-                nodeSpacing: 50,
-                rankSpacing: 80,
+                padding: 25,
+                nodeSpacing: 60,
+                rankSpacing: 100,
                 htmlLabels: true,
-                defaultRenderer: 'dagre-wrapper'
+                defaultRenderer: 'dagre-wrapper',
+                useMaxWidth: true
             }}
         }});
     </script>
@@ -98,55 +102,45 @@ st.markdown("End-to-end data flow from sensors to analytics dashboards using clo
 
 cloud_diagram = """
 flowchart TB
-    subgraph Sources["⚡ Data Sources"]
-        direction TB
-        subgraph Realtime["Real-Time Streaming"]
-            TMEIC["🔌 TMEIC Controller<br/><small>Power & Grid Data</small>"]
-            BMS["🔋 BMS<br/><small>Battery Health</small>"]
-            EMS["📡 ENKA EMS/SCADA<br/><small>Control Events</small>"]
-        end
-        subgraph Batch["Batch Ingestion"]
-            RTM["💰 RTM Settlement<br/><small>Revenue Data</small>"]
-            CMMS["🔧 ENKA CMMS<br/><small>Maintenance</small>"]
-            FINANCE["📊 Contracts & Finance<br/><small>Commercial</small>"]
-        end
-    end
+    TMEIC["🔌 <b>TMEIC Controller</b><br/>Power & Grid Data"]
+    BMS["🔋 <b>BMS</b><br/>Battery Health"]
+    EMS["📡 <b>ENKA EMS</b><br/>Control Events"]
+    RTM["💰 <b>RTM Settlement</b><br/>Revenue Data"]
+    CMMS["🔧 <b>CMMS</b><br/>Maintenance"]
 
-    subgraph AWS["☁️ AWS Cloud Platform"]
-        subgraph Lake["🗄️ Medallion Architecture"]
-            BRONZE["🥉 Bronze<br/><small>Raw Data</small>"]
-            SILVER["🥈 Silver<br/><small>Cleaned & Validated</small>"]
-            GOLD["🥇 Gold<br/><small>Curated KPIs</small>"]
-        end
-        subgraph Compute["⚙️ AWS Databricks"]
-            STREAM["🌊 Structured Streaming<br/><small>Real-Time Processing</small>"]
-            DELTA["📦 Delta Lake<br/><small>ACID Transactions</small>"]
-            UNITY["🔐 Unity Catalog<br/><small>Governance</small>"]
-        end
-    end
+    BRONZE["🥉 <b>Bronze Layer</b><br/>Raw Data"]
+    SILVER["🥈 <b>Silver Layer</b><br/>Cleaned & Validated"]
+    GOLD["🥇 <b>Gold Layer</b><br/>Curated KPIs"]
 
-    subgraph Serving["📈 Analytics & Serving"]
-        API["🚀 FastAPI<br/><small>REST Endpoints</small>"]
-        BI["📊 Streamlit Dashboards<br/><small>Interactive Analytics</small>"]
-    end
+    SIGNAL["📡 <b>Signal Correction</b><br/>SoC / SoE / SoP"]
+    FORECAST["🔮 <b>Forecasting</b><br/>Time-to-Empty/Full"]
+    BALANCE["⚖️ <b>Balancing</b><br/>Imbalance Detection"]
+    INSIGHTS["💡 <b>Insights</b><br/>Auto Findings"]
 
-    TMEIC -->|"1-min telemetry"| BRONZE
-    BMS -->|"1-min telemetry"| BRONZE
-    EMS -->|"Events"| BRONZE
-    RTM -->|"Daily batch"| BRONZE
-    CMMS -->|"On-event"| BRONZE
-    FINANCE -->|"On-change"| BRONZE
+    API["🚀 <b>FastAPI</b><br/>REST Endpoints"]
+    BI["📊 <b>Streamlit</b><br/>18 Dashboards"]
 
-    BRONZE --> STREAM
-    STREAM --> DELTA
-    DELTA --> SILVER
+    TMEIC --> BRONZE
+    BMS --> BRONZE
+    EMS --> BRONZE
+    RTM --> BRONZE
+    CMMS --> BRONZE
+
+    BRONZE --> SILVER
     SILVER --> GOLD
-    UNITY -.->|"governs"| DELTA
+
+    SILVER --> SIGNAL
+    SILVER --> BALANCE
+    SIGNAL --> FORECAST
+    SIGNAL --> INSIGHTS
+    BALANCE --> INSIGHTS
+    FORECAST --> GOLD
+    INSIGHTS --> GOLD
 
     GOLD --> API
     API --> BI
 """
-render_mermaid(cloud_diagram, height=1120)
+render_mermaid(cloud_diagram, height=1100)
 
 st.markdown("")
 col1, col2 = st.columns(2)
@@ -171,34 +165,40 @@ st.markdown("Data flows through three progressively refined layers:")
 
 medallion_diagram = """
 flowchart LR
-    subgraph Bronze["Bronze - Raw"]
-        B1["telemetry_raw"]
-        B2["events_raw"]
-        B3["settlement_raw"]
-    end
-    subgraph Silver["Silver - Cleaned"]
-        S1["fact_telemetry"]
-        S2["fact_events"]
-        S3["fact_settlement"]
-        S4["dimensions"]
-    end
-    subgraph Gold["Gold - Curated"]
-        G1["agg_telemetry_15min"]
-        G2["agg_site_daily"]
-        G3["agg_revenue_daily"]
-    end
+    B1["🥉 <b>telemetry_raw</b>"]
+    B2["🥉 <b>events_raw</b>"]
+    B3["🥉 <b>settlement_raw</b>"]
+
+    S1["🥈 <b>fact_telemetry</b>"]
+    S2["🥈 <b>fact_events</b>"]
+    S3["🥈 <b>fact_settlement</b>"]
+    S4["🥈 <b>dimensions</b>"]
+
+    E1["🧠 <b>corrected_signals</b>"]
+    E2["🧠 <b>forecasts</b>"]
+    E3["🧠 <b>imbalance</b>"]
+    E4["🧠 <b>insights</b>"]
+
+    G1["🥇 <b>agg_15min</b>"]
+    G2["🥇 <b>agg_daily</b>"]
+    G3["🥇 <b>v_signal_health</b>"]
+
     B1 --> S1
     B2 --> S2
     B3 --> S3
+    S1 --> E1
+    S1 --> E3
+    E1 --> E2
+    E1 --> E4
+    E3 --> E4
     S1 --> G1
     S1 --> G2
-    S2 --> G2
-    S3 --> G3
+    E1 --> G3
 """
 render_mermaid(medallion_diagram, height=550)
 
 st.markdown("")
-col1, col2, col3 = st.columns(3)
+col1, col2, col3, col4 = st.columns(4)
 with col1:
     with st.container(border=True):
         st.markdown("**Bronze (Raw)**")
@@ -210,6 +210,11 @@ with col2:
         st.caption("Canonical schema, validated")
         st.markdown("fact_*, dim_*")
 with col3:
+    with st.container(border=True):
+        st.markdown("**Edge Intelligence**")
+        st.caption("ML-enhanced signals")
+        st.markdown("corrected_signals, forecasts, insights")
+with col4:
     with st.container(border=True):
         st.markdown("**Gold (Curated)**")
         st.caption("KPI tables, rollups")
@@ -223,7 +228,11 @@ erDiagram
     dim_site ||--o{ fact_telemetry : has
     dim_site ||--o{ fact_events : has
     dim_site ||--o{ fact_settlement : has
+    dim_site ||--o{ fact_corrected_signals : has
+    dim_site ||--o{ fact_forecasts : has
+    dim_site ||--o{ fact_insights_findings : has
     dim_asset ||--o{ fact_telemetry : has
+    dim_asset ||--o{ fact_imbalance : has
     dim_partner ||--o{ fact_settlement : has
     dim_service ||--o{ fact_settlement : has
     dim_sla ||--o{ dim_site : governs
@@ -246,24 +255,103 @@ erDiagram
         float soc_pct
         float p_kw
     }
-    fact_settlement {
-        date date
+    fact_corrected_signals {
+        datetime ts
         string site_id FK
-        float revenue_gbp
-        float energy_mwh
+        float soc_corrected
+        float trust_score
+    }
+    fact_forecasts {
+        datetime ts
+        string site_id FK
+        int horizon_min
+        float time_to_empty
+    }
+    fact_insights_findings {
+        string finding_id PK
+        string site_id FK
+        string severity
+        float value_gbp
     }
 """
-render_mermaid(data_model_diagram, height=600)
+render_mermaid(data_model_diagram, height=850)
 
 st.markdown("")
 st.markdown("""
 **Star Schema Design:**
 - **Dimensions**: Site, Asset, Service, Partner, SLA
-- **Facts**: Telemetry, Dispatch, Events, Settlement, Maintenance
-- **Derived KPIs**: Availability, RTE, DoD, Lost Revenue
+- **Core Facts**: Telemetry, Dispatch, Events, Settlement, Maintenance
+- **Edge Intelligence Facts**: Corrected Signals, Forecasts, Imbalance, Insights
+- **Derived KPIs**: Availability, RTE, DoD, Lost Revenue, Trust Score, Value-at-Risk
 """)
 
-# Section 4: Data Sources
+# Section 4: Edge Intelligence
+st.markdown('<h2><span class="material-icons">psychology</span> Edge Intelligence Layer</h2>', unsafe_allow_html=True)
+st.markdown("Advanced battery analytics with signal correction, forecasting, and automated insights.")
+
+edge_diagram = """
+flowchart LR
+    RAW["📥 <b>BMS Raw SoC</b>"]
+    CELL["📥 <b>Cell Voltages</b>"]
+    TEMP["📥 <b>Temperatures</b>"]
+
+    SOC["📡 <b>SoC Correction</b>"]
+    SOE["📡 <b>SoE Calculation</b>"]
+    TRUST["📡 <b>Trust Score</b>"]
+
+    TTE["🔮 <b>Time-to-Empty</b>"]
+    TTF["🔮 <b>Time-to-Full</b>"]
+
+    IMBAL["⚖️ <b>Imbalance Score</b>"]
+    ACTION["⚖️ <b>Action Queue</b>"]
+
+    FIND["💡 <b>Findings</b>"]
+    VALUE["💡 <b>Value Impact</b>"]
+
+    RAW --> SOC
+    CELL --> SOC
+    CELL --> TRUST
+    SOC --> SOE
+    SOC --> TRUST
+
+    SOE --> TTE
+    SOE --> TTF
+
+    CELL --> IMBAL
+    TEMP --> IMBAL
+    IMBAL --> ACTION
+
+    TRUST --> FIND
+    IMBAL --> FIND
+    TTE --> FIND
+    FIND --> VALUE
+"""
+render_mermaid(edge_diagram, height=500)
+
+st.markdown("")
+col1, col2, col3, col4 = st.columns(4)
+with col1:
+    with st.container(border=True):
+        st.markdown("**📡 Signal Correction**")
+        st.caption("Corrects BMS SoC using cell analysis")
+        st.markdown("• SoC/SoE/SoP\n• HSL/LSL bands\n• Trust Score 0-100")
+with col2:
+    with st.container(border=True):
+        st.markdown("**🔮 Forecasting**")
+        st.caption("Predicts energy availability")
+        st.markdown("• Time-to-Empty/Full\n• 5 horizons\n• Confidence %")
+with col3:
+    with st.container(border=True):
+        st.markdown("**⚖️ Balancing**")
+        st.caption("Detects rack imbalances")
+        st.markdown("• Imbalance Score\n• Cell deltas\n• Action queue")
+with col4:
+    with st.container(border=True):
+        st.markdown("**💡 Insights**")
+        st.caption("Automated findings")
+        st.markdown("• 5 categories\n• Value impact £\n• Recommendations")
+
+# Section 5: Data Sources
 st.markdown('<h2><span class="material-icons">sensors</span> Upstream Data Sources</h2>', unsafe_allow_html=True)
 
 sources = [

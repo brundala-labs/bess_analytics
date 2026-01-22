@@ -25,7 +25,7 @@ from dashboard.components.header import (
 from dashboard.components.kpi_glossary import render_kpi_glossary
 from db.loader import get_connection
 
-st.set_page_config(page_title="Portfolio Executive Cockpit", page_icon="📊", layout="wide")
+st.set_page_config(initial_sidebar_state="expanded", page_title="Portfolio Executive Cockpit", page_icon="📊", layout="wide")
 
 # Apply ENKA branding
 apply_enka_theme()
@@ -85,12 +85,23 @@ def load_portfolio_data():
         GROUP BY site_id
     """).df()
 
+    # Signal Trust Score from Edge Intelligence
+    trust_score = conn.execute("""
+        SELECT
+            site_id,
+            AVG(signal_trust_score) as signal_trust_score
+        FROM fact_corrected_signals
+        WHERE ts >= (SELECT MAX(ts) FROM fact_corrected_signals) - INTERVAL '24 hours'
+        GROUP BY site_id
+    """).df()
+
     # Merge all data
     portfolio = sites.merge(revenue, on="site_id", how="left")
     portfolio = portfolio.merge(availability, on="site_id", how="left")
     portfolio = portfolio.merge(health, on="site_id", how="left")
     portfolio = portfolio.merge(events, on="site_id", how="left")
-    portfolio = portfolio.fillna({"revenue_mtd": 0, "availability": 0, "avg_soh": 0, "active_faults": 0})
+    portfolio = portfolio.merge(trust_score, on="site_id", how="left")
+    portfolio = portfolio.fillna({"revenue_mtd": 0, "availability": 0, "avg_soh": 0, "active_faults": 0, "signal_trust_score": 100})
 
     conn.close()
     return portfolio
@@ -144,6 +155,7 @@ def main():
         "active_faults": int(portfolio["active_faults"].sum()),
         "avg_soh_pct": portfolio["avg_soh"].mean(),
         "revenue_at_risk_gbp": portfolio[portfolio["availability"] < 95]["revenue_mtd"].sum() * 0.1,
+        "avg_signal_trust": portfolio["signal_trust_score"].mean(),
     }
 
     # Get dashboard config
@@ -201,12 +213,12 @@ def main():
 
     display_df = portfolio[[
         "name", "bess_mw", "bess_mwh", "vendor_controller",
-        "revenue_mtd", "availability", "avg_soh", "active_faults"
+        "revenue_mtd", "availability", "avg_soh", "signal_trust_score", "active_faults"
     ]].copy()
 
     display_df.columns = [
         "Site", "MW", "MWh", "Vendor",
-        "Revenue MTD (£)", "Availability %", "Avg SOH %", "Active Faults"
+        "Revenue MTD (£)", "Availability %", "Avg SOH %", "Signal Trust", "Active Faults"
     ]
 
     # Color coding
@@ -216,8 +228,10 @@ def main():
             styles[5] = 'background-color: #ffcdd2'
         if row["Avg SOH %"] < 90:
             styles[6] = 'background-color: #ffecb3'
+        if row["Signal Trust"] < 70:
+            styles[7] = 'background-color: #ffecb3'
         if row["Active Faults"] > 0:
-            styles[7] = 'background-color: #ffcdd2'
+            styles[8] = 'background-color: #ffcdd2'
         return styles
 
     st.dataframe(
@@ -225,6 +239,7 @@ def main():
             "Revenue MTD (£)": "£{:,.0f}",
             "Availability %": "{:.1f}%",
             "Avg SOH %": "{:.1f}%",
+            "Signal Trust": "{:.0f}",
         }),
         use_container_width=True,
         height=200,

@@ -18,7 +18,7 @@ from dashboard.components.branding import apply_enka_theme, render_sidebar_brand
 from dashboard.components.header import get_dashboard_config, render_header, render_filter_bar
 from db.loader import get_connection
 
-st.set_page_config(page_title="Lifecycle & Augmentation", page_icon="🔋", layout="wide")
+st.set_page_config(initial_sidebar_state="expanded", page_title="Lifecycle & Augmentation", page_icon="🔋", layout="wide")
 
 # Apply ENKA branding
 apply_enka_theme()
@@ -117,13 +117,18 @@ def main():
     avg_cycles = latest_health["cycle_count"].mean() if not latest_health.empty else 0
     total_maint_cost = maintenance["total_cost"].sum() if not maintenance.empty else 0
 
+    # Calculate degradation rate (% per year)
+    avg_degradation_rate = degradation["degradation_rate_per_month"].mean() * 12 if not degradation.empty else 0
+
+    # Years to augmentation (when SoH reaches 80%)
+    years_to_aug = max(0, (fleet_avg_soh - 80) / avg_degradation_rate) if avg_degradation_rate > 0 else 10
+
     kpi_values = {
-        "fleet_avg_soh": fleet_avg_soh,
-        "sites_augmentation_needed": int(sites_needing_aug),
-        "avg_cycle_count": avg_cycles,
-        "warranty_claims_open": 2,  # Mock
-        "projected_augmentation_cost": sites_needing_aug * 500000,  # Estimate
-        "avg_remaining_useful_life_years": max(0, (fleet_avg_soh - 70) / 3),  # Rough estimate
+        "avg_soh_pct": fleet_avg_soh,
+        "degradation_rate_pct_year": avg_degradation_rate,
+        "warranty_excursions": int(sites_needing_aug),
+        "years_to_augmentation": years_to_aug,
+        "maintenance_cost_ytd": total_maint_cost,
     }
 
     config = get_dashboard_config(DASHBOARD_KEY)

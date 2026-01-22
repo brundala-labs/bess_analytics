@@ -18,7 +18,7 @@ from dashboard.components.branding import apply_enka_theme, render_sidebar_brand
 from dashboard.components.header import get_dashboard_config, render_header, render_filter_bar
 from db.loader import get_connection
 
-st.set_page_config(page_title="Faults Timeline", page_icon="⚠️", layout="wide")
+st.set_page_config(initial_sidebar_state="expanded", page_title="Faults Timeline", page_icon="⚠️", layout="wide")
 
 # Apply ENKA branding
 apply_enka_theme()
@@ -119,13 +119,31 @@ def main():
     else:
         repeat_rate = 0
 
+    # MTD faults and trips
+    if not faults.empty:
+        mtd_start = faults["start_ts"].max().replace(day=1)
+        faults_mtd = len(faults[(faults["event_type"] == "fault") & (faults["start_ts"] >= mtd_start)])
+        trips_mtd = len(faults[(faults["event_type"] == "trip") & (faults["start_ts"] >= mtd_start)])
+    else:
+        faults_mtd = 0
+        trips_mtd = 0
+
+    # MTBF calculation (days between failures)
+    if len(faults) > 1:
+        time_span = (faults["start_ts"].max() - faults["start_ts"].min()).days
+        mtbf_days = time_span / len(faults) if len(faults) > 0 else 0
+    else:
+        mtbf_days = 30  # Default
+
+    # Repeat faults (codes that appear more than once)
+    repeat_faults = int(fault_codes[fault_codes["count"] > 1]["count"].sum()) if not fault_codes.empty else 0
+
     kpi_values = {
-        "active_faults": active_faults,
-        "faults_7d": faults_7d,
-        "avg_mttr_hours": avg_mttr,
-        "top_fault_code": top_code,
-        "trips_30d": trips_30d,
-        "repeat_fault_rate_pct": repeat_rate,
+        "faults_mtd": faults_mtd,
+        "trips_mtd": trips_mtd,
+        "mttr_hours": avg_mttr,
+        "mtbf_days": mtbf_days,
+        "repeat_faults": repeat_faults,
     }
 
     config = get_dashboard_config(DASHBOARD_KEY)
@@ -314,7 +332,7 @@ def main():
                 "event_type": "Type",
                 "code": "Code",
                 "duration_min": "Duration (min)"
-            }).style.applymap(severity_color, subset=["Severity"]).format({
+            }).style.map(severity_color, subset=["Severity"]).format({
                 "Duration (min)": "{:.0f}"
             }),
             use_container_width=True,

@@ -721,7 +721,7 @@ def generate_bronze_layer(telemetry_df: pd.DataFrame, events_df: pd.DataFrame, s
             continue
 
         # Group by hour
-        site_telemetry["hour"] = site_telemetry["ts"].dt.floor("H")
+        site_telemetry["hour"] = site_telemetry["ts"].dt.floor("h")
 
         for hour, hour_data in site_telemetry.groupby("hour"):
             # Create JSONL file for this hour
@@ -875,6 +875,439 @@ def generate_gold_layer(sites_df: pd.DataFrame, telemetry_df: pd.DataFrame,
     logger.info(f"  - agg_events_daily: {len(agg_events_daily):,} records")
 
 
+# ============== Edge Intelligence Data Generation ==============
+
+def generate_fact_corrected_signals(
+    sites_df: pd.DataFrame,
+    telemetry_df: pd.DataFrame,
+    start_date: datetime,
+    num_days: int,
+) -> pd.DataFrame:
+    """Generate corrected signal data with trust scores."""
+    logger.info("Generating corrected signals data...")
+
+    records = []
+
+    # Get SOC data from telemetry
+    soc_data = telemetry_df[telemetry_df["tag"] == "soc_pct"].copy()
+
+    for _, site in sites_df.iterrows():
+        site_id = site["site_id"]
+        bess_mwh = site["bess_mwh"]
+        bess_mw = site["bess_mw"]
+
+        site_soc = soc_data[soc_data["site_id"] == site_id].copy()
+
+        # Sample every 5 minutes for corrected signals
+        site_soc["ts_5min"] = site_soc["ts"].dt.floor("5min")
+        site_soc_sampled = site_soc.groupby("ts_5min").first().reset_index()
+
+        for _, row in site_soc_sampled.iterrows():
+            ts = row["ts_5min"]
+            soc_raw = row["value"]
+
+            # Simulate drift detection
+            drift = np.random.normal(0, 1.5)
+            drift_detected = abs(drift) > 2.0
+            correction_applied = drift_detected
+
+            soc_corrected = soc_raw + drift * 0.3 if correction_applied else soc_raw
+            soc_corrected = np.clip(soc_corrected, 0, 100)
+
+            # Calculate trust score
+            base_trust = 95 - abs(drift) * 5
+            trust_score = np.clip(base_trust + np.random.normal(0, 3), 50, 100)
+
+            # Calculate SoE
+            hsl = 95 - np.random.uniform(0, 5)
+            lsl = 10 + np.random.uniform(0, 5)
+            usable_soc = max(0, min(soc_corrected, hsl) - lsl)
+            soe_mwh = (usable_soc / 100) * bess_mwh
+
+            # Calculate SoP limits
+            sop_charge = bess_mw * 1000 * (1 - max(0, soc_corrected - 80) / 20)
+            sop_discharge = bess_mw * 1000 * (1 - max(0, 20 - soc_corrected) / 20)
+
+            records.append({
+                "site_id": site_id,
+                "ts": ts,
+                "soc_pct_raw": round(soc_raw, 2),
+                "soc_pct_corrected": round(soc_corrected, 2),
+                "soe_mwh_corrected": round(soe_mwh, 3),
+                "sop_charge_kw": round(max(0, sop_charge), 1),
+                "sop_discharge_kw": round(max(0, sop_discharge), 1),
+                "hsl_soc_pct": round(hsl, 1),
+                "lsl_soc_pct": round(lsl, 1),
+                "signal_trust_score": round(trust_score, 1),
+                "drift_detected": drift_detected,
+                "correction_applied": correction_applied,
+            })
+
+    return pd.DataFrame(records)
+
+
+def generate_fact_constraints(
+    sites_df: pd.DataFrame,
+    start_date: datetime,
+    num_days: int,
+) -> pd.DataFrame:
+    """Generate power/energy constraint records."""
+    logger.info("Generating constraints data...")
+
+    records = []
+    constraint_types = ["thermal", "soc_high", "soc_low", "grid", "cell_voltage"]
+    severities = ["low", "medium", "high", "critical"]
+
+    for _, site in sites_df.iterrows():
+        site_id = site["site_id"]
+        bess_mw = site["bess_mw"]
+
+        for day in range(num_days):
+            # Generate random constraints throughout the day
+            num_constraints = np.random.poisson(3)
+
+            for _ in range(num_constraints):
+                ts = start_date + timedelta(
+                    days=day,
+                    hours=random.randint(0, 23),
+                    minutes=random.randint(0, 59)
+                )
+
+                constraint_type = random.choice(constraint_types)
+                severity = random.choices(severities, weights=[0.5, 0.3, 0.15, 0.05])[0]
+
+                # Generate limit value based on type
+                if constraint_type == "thermal":
+                    limit_value = bess_mw * 1000 * random.uniform(0.5, 0.9)
+                    reason = "High cell temperature detected"
+                elif constraint_type == "soc_high":
+                    limit_value = bess_mw * 1000 * random.uniform(0.3, 0.7)
+                    reason = "SoC approaching upper limit"
+                elif constraint_type == "soc_low":
+                    limit_value = bess_mw * 1000 * random.uniform(0.3, 0.7)
+                    reason = "SoC approaching lower limit"
+                elif constraint_type == "grid":
+                    limit_value = bess_mw * 1000 * random.uniform(0.6, 0.95)
+                    reason = "Grid frequency/voltage constraint"
+                else:
+                    limit_value = bess_mw * 1000 * random.uniform(0.7, 0.95)
+                    reason = "Cell voltage imbalance"
+
+                records.append({
+                    "site_id": site_id,
+                    "ts": ts,
+                    "constraint_type": constraint_type,
+                    "reason": reason,
+                    "limit_value": round(limit_value, 1),
+                    "duration_min": random.randint(5, 120),
+                    "severity": severity,
+                })
+
+    return pd.DataFrame(records)
+
+
+def generate_fact_cell_telemetry(
+    sites_df: pd.DataFrame,
+    assets_df: pd.DataFrame,
+    start_date: datetime,
+    num_days: int,
+) -> pd.DataFrame:
+    """Generate cell-level voltage and temperature data."""
+    logger.info("Generating cell telemetry data...")
+
+    records = []
+
+    for _, site in sites_df.iterrows():
+        site_id = site["site_id"]
+        site_assets = assets_df[assets_df["site_id"] == site_id]
+        rack_assets = site_assets[site_assets["asset_type"] == "battery_rack"]
+
+        for _, rack in rack_assets.iterrows():
+            rack_id = rack["asset_id"]
+            num_cells = 16  # Cells per rack
+
+            # Generate hourly samples for last few days
+            for hour in range(min(num_days * 24, 72)):  # Limit to 72 hours
+                ts = start_date + timedelta(days=num_days) - timedelta(hours=72-hour)
+
+                # Base values with rack-specific variation
+                base_voltage = 3300 + np.random.normal(0, 20)
+                base_temp = 28 + np.random.normal(0, 2)
+
+                for cell_idx in range(num_cells):
+                    cell_id = f"{rack_id}_C{cell_idx+1:02d}"
+
+                    # Cell-specific variation
+                    voltage = base_voltage + np.random.normal(0, 15)
+                    temp = base_temp + np.random.normal(0, 1.5)
+
+                    records.append({
+                        "site_id": site_id,
+                        "rack_id": rack_id,
+                        "cell_id": cell_id,
+                        "ts": ts,
+                        "voltage_mv": round(voltage, 1),
+                        "temperature_c": round(temp, 2),
+                    })
+
+    return pd.DataFrame(records)
+
+
+def generate_fact_imbalance(
+    sites_df: pd.DataFrame,
+    assets_df: pd.DataFrame,
+    start_date: datetime,
+    num_days: int,
+) -> pd.DataFrame:
+    """Generate rack imbalance detection records."""
+    logger.info("Generating imbalance data...")
+
+    records = []
+    severities = ["low", "medium", "high", "critical"]
+
+    for _, site in sites_df.iterrows():
+        site_id = site["site_id"]
+        site_assets = assets_df[assets_df["site_id"] == site_id]
+        rack_assets = site_assets[site_assets["asset_type"] == "battery_rack"]
+
+        for _, rack in rack_assets.iterrows():
+            rack_id = rack["asset_id"]
+
+            # Generate 15-minute imbalance samples
+            for interval in range(num_days * 24 * 4):  # 15-min intervals
+                ts = start_date + timedelta(minutes=interval * 15)
+
+                # Random imbalance with occasional spikes
+                base_imbalance = np.random.exponential(15)
+                if random.random() < 0.05:
+                    base_imbalance += random.uniform(20, 50)
+
+                imbalance_score = min(100, base_imbalance)
+
+                # Determine severity
+                if imbalance_score > 60:
+                    severity = "critical"
+                elif imbalance_score > 45:
+                    severity = "high"
+                elif imbalance_score > 30:
+                    severity = "medium"
+                else:
+                    severity = "low"
+
+                voltage_delta = imbalance_score * 1.5 + np.random.normal(0, 5)
+                temp_delta = imbalance_score * 0.1 + np.random.normal(0, 0.5)
+
+                records.append({
+                    "site_id": site_id,
+                    "rack_id": rack_id,
+                    "ts": ts,
+                    "imbalance_score": round(imbalance_score, 2),
+                    "severity": severity,
+                    "max_cell_delta_mv": round(max(0, voltage_delta), 1),
+                    "max_temp_delta_c": round(max(0, temp_delta), 2),
+                })
+
+    return pd.DataFrame(records)
+
+
+def generate_fact_balancing_actions(
+    imbalance_df: pd.DataFrame,
+) -> pd.DataFrame:
+    """Generate balancing action recommendations."""
+    logger.info("Generating balancing actions...")
+
+    records = []
+    action_id = 1
+
+    # Filter to high/critical imbalances
+    high_imbalance = imbalance_df[imbalance_df["severity"].isin(["high", "critical"])]
+
+    # Sample a subset to create actions
+    sampled = high_imbalance.sample(min(len(high_imbalance), 500))
+
+    for _, row in sampled.iterrows():
+        if row["severity"] == "critical":
+            action_type = "immediate_balancing"
+            priority = "urgent"
+            duration = random.randint(60, 180)
+        else:
+            action_type = random.choice(["scheduled_balancing", "monitoring", "thermal_management"])
+            priority = random.choice(["high", "medium"])
+            duration = random.randint(30, 120)
+
+        recovery = row["imbalance_score"] / 100 * 0.02 * random.uniform(0.8, 1.2)
+        status = random.choices(["pending", "in_progress", "completed"], weights=[0.6, 0.2, 0.2])[0]
+
+        records.append({
+            "action_id": f"ACT{action_id:06d}",
+            "site_id": row["site_id"],
+            "rack_id": row["rack_id"],
+            "ts": row["ts"],
+            "action_type": action_type,
+            "priority": priority,
+            "estimated_duration_min": duration,
+            "estimated_recovery_mwh": round(recovery, 4),
+            "status": status,
+        })
+        action_id += 1
+
+    return pd.DataFrame(records)
+
+
+def generate_fact_forecasts(
+    sites_df: pd.DataFrame,
+    start_date: datetime,
+    num_days: int,
+) -> pd.DataFrame:
+    """Generate energy/power availability forecasts."""
+    logger.info("Generating forecast data...")
+
+    records = []
+    horizons = [15, 30, 60, 120, 240]
+
+    for _, site in sites_df.iterrows():
+        site_id = site["site_id"]
+        bess_mwh = site["bess_mwh"]
+
+        # Generate hourly forecasts
+        for hour in range(num_days * 24):
+            ts = start_date + timedelta(hours=hour)
+
+            # Base SoC varies through day
+            hour_of_day = ts.hour
+            if 16 <= hour_of_day <= 20:
+                base_soc = random.uniform(30, 50)  # Lower during peak discharge
+            elif 0 <= hour_of_day <= 5:
+                base_soc = random.uniform(70, 90)  # Higher after overnight charge
+            else:
+                base_soc = random.uniform(40, 70)
+
+            for horizon in horizons:
+                # Predict SoC change based on horizon
+                soc_change = np.random.normal(0, horizon / 30)
+                predicted_soc = np.clip(base_soc - soc_change, 5, 95)
+
+                # Calculate time to empty/full
+                if predicted_soc > 50:
+                    time_to_empty = (predicted_soc - 10) / 0.5 * 60  # Rough estimate
+                    time_to_full = None
+                else:
+                    time_to_empty = (predicted_soc - 10) / 0.3 * 60
+                    time_to_full = (95 - predicted_soc) / 0.4 * 60
+
+                # Confidence decreases with horizon
+                confidence = max(50, 98 - horizon / 5)
+
+                # Available energy
+                available_energy = (predicted_soc - 10) / 100 * bess_mwh
+
+                records.append({
+                    "site_id": site_id,
+                    "ts": ts,
+                    "horizon_min": horizon,
+                    "predicted_soc_pct": round(predicted_soc, 1),
+                    "time_to_empty_min": round(time_to_empty, 0) if time_to_empty else None,
+                    "time_to_full_min": round(time_to_full, 0) if time_to_full else None,
+                    "confidence_pct": round(confidence, 1),
+                    "available_energy_mwh": round(max(0, available_energy), 3),
+                })
+
+    return pd.DataFrame(records)
+
+
+def generate_fact_insights_findings(
+    sites_df: pd.DataFrame,
+    start_date: datetime,
+    num_days: int,
+) -> pd.DataFrame:
+    """Generate automated insights and findings."""
+    logger.info("Generating insights findings...")
+
+    records = []
+    finding_id = 1
+
+    categories = ["signal_quality", "energy_availability", "power_constraints", "cell_imbalance", "thermal", "operational"]
+    severities = ["info", "warning", "alert", "critical"]
+
+    insight_templates = [
+        {
+            "category": "signal_quality",
+            "title": "Signal Trust Score Degraded",
+            "description": "Trust score has dropped below acceptable threshold due to measurement drift.",
+            "recommendation": "Review BMS calibration and cell-level data quality.",
+        },
+        {
+            "category": "energy_availability",
+            "title": "Low Energy Reserve Warning",
+            "description": "Available energy is below recommended reserve levels.",
+            "recommendation": "Schedule charge cycle or reduce discharge commitments.",
+        },
+        {
+            "category": "power_constraints",
+            "title": "Power Capacity Derated",
+            "description": "Maximum power output is constrained due to thermal or SoC limits.",
+            "recommendation": "Review thermal management and operating strategy.",
+        },
+        {
+            "category": "cell_imbalance",
+            "title": "Cell Imbalance Detected",
+            "description": "Significant voltage variation detected between cells in rack.",
+            "recommendation": "Schedule passive balancing cycle.",
+        },
+        {
+            "category": "thermal",
+            "title": "Thermal Alert",
+            "description": "Cell temperatures approaching operational limits.",
+            "recommendation": "Check HVAC operation and reduce power if needed.",
+        },
+    ]
+
+    for _, site in sites_df.iterrows():
+        site_id = site["site_id"]
+        bess_mwh = site["bess_mwh"]
+
+        # Generate insights over the period
+        num_insights = random.randint(5, 15)
+
+        for _ in range(num_insights):
+            template = random.choice(insight_templates)
+            severity = random.choices(severities, weights=[0.3, 0.4, 0.2, 0.1])[0]
+
+            ts = start_date + timedelta(
+                days=random.randint(0, num_days - 1),
+                hours=random.randint(0, 23),
+                minutes=random.randint(0, 59)
+            )
+
+            # Value estimation based on severity
+            if severity == "critical":
+                value = bess_mwh * 100 * random.uniform(0.05, 0.1)
+            elif severity == "alert":
+                value = bess_mwh * 100 * random.uniform(0.02, 0.05)
+            elif severity == "warning":
+                value = bess_mwh * 100 * random.uniform(0.01, 0.02)
+            else:
+                value = bess_mwh * 100 * random.uniform(0, 0.01)
+
+            records.append({
+                "finding_id": f"FND{finding_id:06d}",
+                "ts": ts,
+                "site_id": site_id,
+                "category": template["category"],
+                "severity": severity,
+                "title": template["title"],
+                "description": template["description"],
+                "recommendation": template["recommendation"],
+                "estimated_value_gbp": round(value, 2),
+                "confidence": round(random.uniform(0.7, 0.95), 2),
+                "acknowledged": random.random() < 0.3,
+                "resolved": random.random() < 0.2,
+            })
+            finding_id += 1
+
+    return pd.DataFrame(records)
+
+
 def main():
     """Main data generation function."""
     logger.info("Starting BESS Analytics data generation...")
@@ -942,6 +1375,39 @@ def main():
 
     logger.info("Silver layer (core tables) complete!")
 
+    # Generate Edge Intelligence tables
+    logger.info("\nGenerating Edge Intelligence tables...")
+
+    corrected_signals_df = generate_fact_corrected_signals(sites_df, telemetry_df, start_date, NUM_DAYS)
+    corrected_signals_df.to_parquet(DATA_DIR / "fact_corrected_signals.parquet", index=False)
+    logger.info(f"Corrected Signals: {len(corrected_signals_df):,} records")
+
+    constraints_df = generate_fact_constraints(sites_df, start_date, NUM_DAYS)
+    constraints_df.to_parquet(DATA_DIR / "fact_constraints.parquet", index=False)
+    logger.info(f"Constraints: {len(constraints_df):,} records")
+
+    cell_telemetry_df = generate_fact_cell_telemetry(sites_df, assets_df, start_date, NUM_DAYS)
+    cell_telemetry_df.to_parquet(DATA_DIR / "fact_cell_telemetry.parquet", index=False)
+    logger.info(f"Cell Telemetry: {len(cell_telemetry_df):,} records")
+
+    imbalance_df = generate_fact_imbalance(sites_df, assets_df, start_date, NUM_DAYS)
+    imbalance_df.to_parquet(DATA_DIR / "fact_imbalance.parquet", index=False)
+    logger.info(f"Imbalance: {len(imbalance_df):,} records")
+
+    balancing_actions_df = generate_fact_balancing_actions(imbalance_df)
+    balancing_actions_df.to_parquet(DATA_DIR / "fact_balancing_actions.parquet", index=False)
+    logger.info(f"Balancing Actions: {len(balancing_actions_df):,} records")
+
+    forecasts_df = generate_fact_forecasts(sites_df, start_date, NUM_DAYS)
+    forecasts_df.to_parquet(DATA_DIR / "fact_forecasts.parquet", index=False)
+    logger.info(f"Forecasts: {len(forecasts_df):,} records")
+
+    insights_df = generate_fact_insights_findings(sites_df, start_date, NUM_DAYS)
+    insights_df.to_parquet(DATA_DIR / "fact_insights_findings.parquet", index=False)
+    logger.info(f"Insights: {len(insights_df):,} records")
+
+    logger.info("Edge Intelligence tables complete!")
+
     # Generate Bronze layer (raw streaming simulation)
     generate_bronze_layer(telemetry_df, events_df, sites_df)
 
@@ -962,6 +1428,14 @@ def main():
     print(f"  - Events: {len(events_df)}")
     print(f"  - Settlement records: {len(settlement_df)}")
     print(f"  - Maintenance tickets: {len(maintenance_df)}")
+    print(f"\nEdge Intelligence Tables:")
+    print(f"  - Corrected Signals: {len(corrected_signals_df):,}")
+    print(f"  - Constraints: {len(constraints_df):,}")
+    print(f"  - Cell Telemetry: {len(cell_telemetry_df):,}")
+    print(f"  - Imbalance: {len(imbalance_df):,}")
+    print(f"  - Balancing Actions: {len(balancing_actions_df):,}")
+    print(f"  - Forecasts: {len(forecasts_df):,}")
+    print(f"  - Insights: {len(insights_df):,}")
     print(f"\nBronze Layer: {BRONZE_DIR}")
     print(f"Gold Layer: {GOLD_DIR}")
 

@@ -956,6 +956,296 @@ def get_grid_code_metrics(
     return df.to_dict(orient="records")
 
 
+# ============== Edge Intelligence ==============
+
+@app.get("/edge/corrected_signals")
+def get_corrected_signals(
+    site_id: Optional[str] = Query(None),
+    start_date: Optional[date] = Query(None),
+    end_date: Optional[date] = Query(None),
+    limit: int = Query(1000, le=10000),
+):
+    """Get corrected signal data with trust scores."""
+    conn = get_db()
+
+    query = """
+        SELECT
+            site_id, ts, soc_pct_raw, soc_pct_corrected, soe_mwh_corrected,
+            sop_charge_kw, sop_discharge_kw, hsl_soc_pct, lsl_soc_pct,
+            signal_trust_score, drift_detected, correction_applied
+        FROM fact_corrected_signals
+        WHERE 1=1
+    """
+    params = []
+
+    if site_id:
+        query += " AND site_id = ?"
+        params.append(site_id)
+    if start_date:
+        query += " AND ts >= ?"
+        params.append(datetime.combine(start_date, datetime.min.time()))
+    if end_date:
+        query += " AND ts <= ?"
+        params.append(datetime.combine(end_date, datetime.max.time()))
+
+    query += f" ORDER BY ts DESC LIMIT {limit}"
+
+    df = conn.execute(query, params).df()
+    conn.close()
+
+    return df.to_dict(orient="records")
+
+
+@app.get("/edge/latest_signals")
+def get_latest_corrected_signals(site_id: Optional[str] = Query(None)):
+    """Get latest corrected signals per site."""
+    conn = get_db()
+
+    query = "SELECT * FROM v_latest_corrected_signals"
+    params = []
+
+    if site_id:
+        query = "SELECT * FROM v_latest_corrected_signals WHERE site_id = ?"
+        params.append(site_id)
+
+    df = conn.execute(query, params).df()
+    conn.close()
+
+    return df.to_dict(orient="records")
+
+
+@app.get("/edge/signal_health")
+def get_signal_health(site_id: Optional[str] = Query(None)):
+    """Get signal health summary per site."""
+    conn = get_db()
+
+    query = "SELECT * FROM v_site_signal_health"
+    params = []
+
+    if site_id:
+        query = "SELECT * FROM v_site_signal_health WHERE site_id = ?"
+        params.append(site_id)
+
+    df = conn.execute(query, params).df()
+    conn.close()
+
+    return df.to_dict(orient="records")
+
+
+@app.get("/edge/constraints")
+def get_constraints(
+    site_id: Optional[str] = Query(None),
+    constraint_type: Optional[str] = Query(None),
+    limit: int = Query(500, le=5000),
+):
+    """Get power/energy constraint records."""
+    conn = get_db()
+
+    query = """
+        SELECT site_id, ts, constraint_type, reason, limit_value, duration_min, severity
+        FROM fact_constraints
+        WHERE 1=1
+    """
+    params = []
+
+    if site_id:
+        query += " AND site_id = ?"
+        params.append(site_id)
+    if constraint_type:
+        query += " AND constraint_type = ?"
+        params.append(constraint_type)
+
+    query += f" ORDER BY ts DESC LIMIT {limit}"
+
+    df = conn.execute(query, params).df()
+    conn.close()
+
+    return df.to_dict(orient="records")
+
+
+@app.get("/edge/forecasts")
+def get_forecasts(
+    site_id: Optional[str] = Query(None),
+    horizon_min: Optional[int] = Query(None),
+    limit: int = Query(1000, le=10000),
+):
+    """Get energy/power availability forecasts."""
+    conn = get_db()
+
+    query = """
+        SELECT site_id, ts, horizon_min, predicted_soc_pct,
+               time_to_empty_min, time_to_full_min, confidence_pct, available_energy_mwh
+        FROM fact_forecasts
+        WHERE 1=1
+    """
+    params = []
+
+    if site_id:
+        query += " AND site_id = ?"
+        params.append(site_id)
+    if horizon_min:
+        query += " AND horizon_min = ?"
+        params.append(horizon_min)
+
+    query += f" ORDER BY ts DESC, horizon_min LIMIT {limit}"
+
+    df = conn.execute(query, params).df()
+    conn.close()
+
+    return df.to_dict(orient="records")
+
+
+@app.get("/edge/imbalance")
+def get_imbalance(
+    site_id: Optional[str] = Query(None),
+    severity: Optional[str] = Query(None),
+    limit: int = Query(1000, le=10000),
+):
+    """Get rack imbalance detection records."""
+    conn = get_db()
+
+    query = """
+        SELECT site_id, rack_id, ts, imbalance_score, severity, max_cell_delta_mv, max_temp_delta_c
+        FROM fact_imbalance
+        WHERE 1=1
+    """
+    params = []
+
+    if site_id:
+        query += " AND site_id = ?"
+        params.append(site_id)
+    if severity:
+        query += " AND severity = ?"
+        params.append(severity)
+
+    query += f" ORDER BY ts DESC LIMIT {limit}"
+
+    df = conn.execute(query, params).df()
+    conn.close()
+
+    return df.to_dict(orient="records")
+
+
+@app.get("/edge/balancing_actions")
+def get_balancing_actions(
+    site_id: Optional[str] = Query(None),
+    status: Optional[str] = Query(None),
+    priority: Optional[str] = Query(None),
+    limit: int = Query(500, le=5000),
+):
+    """Get balancing action recommendations."""
+    conn = get_db()
+
+    query = """
+        SELECT action_id, site_id, rack_id, ts, action_type, priority,
+               estimated_duration_min, estimated_recovery_mwh, status
+        FROM fact_balancing_actions
+        WHERE 1=1
+    """
+    params = []
+
+    if site_id:
+        query += " AND site_id = ?"
+        params.append(site_id)
+    if status:
+        query += " AND status = ?"
+        params.append(status)
+    if priority:
+        query += " AND priority = ?"
+        params.append(priority)
+
+    query += f" ORDER BY ts DESC LIMIT {limit}"
+
+    df = conn.execute(query, params).df()
+    conn.close()
+
+    return df.to_dict(orient="records")
+
+
+@app.get("/edge/insights")
+def get_insights(
+    site_id: Optional[str] = Query(None),
+    category: Optional[str] = Query(None),
+    severity: Optional[str] = Query(None),
+    resolved: Optional[bool] = Query(None),
+    limit: int = Query(500, le=5000),
+):
+    """Get automated insights and findings."""
+    conn = get_db()
+
+    query = """
+        SELECT finding_id, ts, site_id, category, severity, title,
+               description, recommendation, estimated_value_gbp,
+               confidence, acknowledged, resolved
+        FROM fact_insights_findings
+        WHERE 1=1
+    """
+    params = []
+
+    if site_id:
+        query += " AND site_id = ?"
+        params.append(site_id)
+    if category:
+        query += " AND category = ?"
+        params.append(category)
+    if severity:
+        query += " AND severity = ?"
+        params.append(severity)
+    if resolved is not None:
+        query += " AND resolved = ?"
+        params.append(resolved)
+
+    query += """
+        ORDER BY
+            CASE severity WHEN 'critical' THEN 1 WHEN 'alert' THEN 2 WHEN 'warning' THEN 3 ELSE 4 END,
+            ts DESC
+    """
+    query += f" LIMIT {limit}"
+
+    df = conn.execute(query, params).df()
+    conn.close()
+
+    return df.to_dict(orient="records")
+
+
+@app.get("/edge/value_at_risk")
+def get_value_at_risk(site_id: Optional[str] = Query(None)):
+    """Get total value at risk from unresolved insights."""
+    conn = get_db()
+
+    query = """
+        SELECT
+            site_id,
+            SUM(estimated_value_gbp) as total_value_at_risk,
+            COUNT(*) as unresolved_count,
+            COUNT(CASE WHEN severity = 'critical' THEN 1 END) as critical_count,
+            COUNT(CASE WHEN severity = 'alert' THEN 1 END) as alert_count
+        FROM fact_insights_findings
+        WHERE resolved = false
+    """
+    params = []
+
+    if site_id:
+        query += " AND site_id = ?"
+        params.append(site_id)
+
+    query += " GROUP BY site_id"
+
+    df = conn.execute(query, params).df()
+
+    # Portfolio total
+    total = conn.execute("""
+        SELECT SUM(estimated_value_gbp) as total, COUNT(*) as count
+        FROM fact_insights_findings WHERE resolved = false
+    """).fetchone()
+    conn.close()
+
+    return {
+        "by_site": df.to_dict(orient="records"),
+        "portfolio": {"total_value_at_risk": total[0] or 0, "total_unresolved": total[1] or 0}
+    }
+
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000)

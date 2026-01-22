@@ -19,7 +19,7 @@ from dashboard.components.branding import apply_enka_theme, render_sidebar_brand
 from dashboard.components.header import get_dashboard_config, render_header, render_filter_bar
 from db.loader import get_connection
 
-st.set_page_config(page_title="Grid Code Performance", page_icon="📈", layout="wide")
+st.set_page_config(initial_sidebar_state="expanded", page_title="Grid Code Performance", page_icon="📈", layout="wide")
 
 # Apply ENKA branding
 apply_enka_theme()
@@ -166,13 +166,24 @@ def main():
     # Non-compliance events
     non_compliance = int(ramp_violations if not ramp_data.empty else 0) + int(voltage_excursions)
 
+    # Dispatch adherence from view
+    dispatch_adherence = dispatch["compliance_pct"].mean() if not dispatch.empty else 100
+
+    # Frequency response score (0-100)
+    freq_response_score = min(100, (1 / max(avg_freq_response, 0.1)) * 100)
+
+    # Voltage compliance (percentage within limits)
+    if not voltage_data.empty:
+        voltage_in_range = ((voltage_data["voltage_pu"] >= 0.95) & (voltage_data["voltage_pu"] <= 1.05)).sum()
+        voltage_compliance = (voltage_in_range / len(voltage_data)) * 100
+    else:
+        voltage_compliance = 100
+
     kpi_values = {
-        "ramp_compliance_pct": ramp_compliance,
-        "avg_freq_response_sec": avg_freq_response,
-        "voltage_excursions_count": int(voltage_excursions),
-        "avg_power_factor": abs(avg_pf) if not np.isnan(avg_pf) else 1.0,
-        "grid_code_score": grid_code_score,
-        "non_compliance_events": non_compliance,
+        "dispatch_adherence_pct": dispatch_adherence,
+        "frequency_response_score": freq_response_score,
+        "voltage_compliance_pct": voltage_compliance,
+        "ramp_rate_compliance_pct": ramp_compliance,
     }
 
     config = get_dashboard_config(DASHBOARD_KEY)

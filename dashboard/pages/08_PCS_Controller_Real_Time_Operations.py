@@ -18,7 +18,7 @@ from dashboard.components.branding import apply_enka_theme, render_sidebar_brand
 from dashboard.components.header import get_dashboard_config, render_header, render_filter_bar
 from db.loader import get_connection
 
-st.set_page_config(page_title="PCS Real-time Ops", page_icon="⚡", layout="wide")
+st.set_page_config(initial_sidebar_state="expanded", page_title="PCS Real-time Ops", page_icon="⚡", layout="wide")
 
 # Apply ENKA branding
 apply_enka_theme()
@@ -138,13 +138,15 @@ def main():
     else:
         compliance = 100
 
+    # Comms status based on controller status
+    comms_status = "Online" if controller_status == "Online" else "Offline"
+
     kpi_values = {
         "current_power_mw": current_power,
-        "current_frequency_hz": current_freq,
         "current_soc_pct": current_soc,
-        "active_alarm_count": active_alarm_count,
-        "controller_status": controller_status,
-        "dispatch_compliance_pct": compliance,
+        "active_alarms": active_alarm_count,
+        "dispatch_adherence_pct": compliance,
+        "comms_status": comms_status,
     }
 
     config = get_dashboard_config(DASHBOARD_KEY)

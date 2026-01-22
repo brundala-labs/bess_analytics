@@ -19,7 +19,7 @@ from dashboard.components.header import get_dashboard_config, render_header, ren
 from dashboard.components.kpi_glossary import render_kpi_glossary
 from db.loader import get_connection
 
-st.set_page_config(page_title="Revenue Loss Attribution", page_icon="💸", layout="wide")
+st.set_page_config(initial_sidebar_state="expanded", page_title="Revenue Loss Attribution", page_icon="💸", layout="wide")
 
 # Apply ENKA branding
 apply_enka_theme()
@@ -120,13 +120,21 @@ def main():
         recovery_rate = 100
         top_loss_site = "N/A"
 
+    # Loss from dispatch issues (separate from faults)
+    loss_from_dispatch = mtd_data[mtd_data["loss_category"] == "Market Conditions"]["revenue_gap"].sum() if not loss_data.empty else 0
+
+    # Loss from comms (data gaps)
+    loss_from_comms = loss_from_gaps
+
+    # Capture rate (actual / forecast)
+    capture_rate = recovery_rate
+
     kpi_values = {
-        "revenue_loss_mtd": total_loss,
-        "loss_from_faults": loss_from_faults,
-        "loss_from_curtailment": loss_from_curtailment,
-        "loss_from_data_gaps": loss_from_gaps,
-        "revenue_recovery_rate": recovery_rate,
-        "top_loss_site": top_loss_site,
+        "total_lost_revenue_gbp": total_loss,
+        "loss_from_faults_gbp": loss_from_faults,
+        "loss_from_dispatch_gbp": loss_from_dispatch,
+        "loss_from_comms_gbp": loss_from_comms,
+        "capture_rate_pct": capture_rate,
     }
 
     config = get_dashboard_config(DASHBOARD_KEY)

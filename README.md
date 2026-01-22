@@ -4,10 +4,12 @@ A comprehensive Battery Energy Storage System (BESS) telemetry analytics platfor
 - **ENKA** - Asset Owner/Operator dashboards
 - **TMEIC** - Controller/PCS dashboards
 - **Combined** - Revenue & SLA tied to controller performance
+- **Edge Intelligence** - Advanced signal correction, forecasting, and insights
 
 ## Features
 
-- 14 interactive dashboards across 3 dashboard packs
+- 18 interactive dashboards across 4 dashboard packs
+- **Edge Intelligence Engine** - Signal correction, forecasting, balancing, and automated insights
 - Synthetic but realistic data generation (30 days, 1-minute resolution, 3 sites, 2 vendors)
 - Local DuckDB analytics database
 - FastAPI backend with RESTful endpoints
@@ -24,15 +26,152 @@ bess_analytics/
 │   └── loader.py
 ├── api/               # FastAPI backend
 │   └── main.py
+├── edge/              # Edge Intelligence engines
+│   ├── __init__.py
+│   ├── signal_correction.py   # SoC/SoE/SoP correction with trust scores
+│   ├── forecasting.py         # Time-to-empty/full predictions
+│   ├── balancing.py           # Rack imbalance detection
+│   └── insights.py            # Automated findings generation
 ├── dashboard/         # Streamlit frontend
 │   ├── Home.py
 │   ├── components/
-│   │   └── header.py
-│   └── pages/         # 14 dashboard pages
+│   │   ├── header.py
+│   │   ├── branding.py
+│   │   └── kpi_glossary.py
+│   └── pages/         # 18 dashboard pages
 ├── data/              # Generated Parquet files & DuckDB
 ├── tests/             # Unit tests
 ├── dashboard_catalog.yaml  # Dashboard metadata
 └── requirements.txt
+```
+
+## System Architecture Diagram
+
+```
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│                              BESS Analytics Platform                              │
+├─────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                   │
+│  ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐                   │
+│  │  TMEIC PCS      │  │  BMS            │  │  ENKA EMS       │                   │
+│  │  Controller     │  │  Battery Mgmt   │  │  SCADA          │                   │
+│  └────────┬────────┘  └────────┬────────┘  └────────┬────────┘                   │
+│           │                    │                    │                             │
+│           └────────────────────┼────────────────────┘                             │
+│                                ▼                                                  │
+│  ┌─────────────────────────────────────────────────────────────────────────────┐ │
+│  │                         Data Generation Layer                                │ │
+│  │  ┌──────────────┐ ┌──────────────┐ ┌──────────────┐ ┌──────────────┐        │ │
+│  │  │ Telemetry    │ │ Events       │ │ Settlements  │ │ Edge Intel   │        │ │
+│  │  │ Generator    │ │ Generator    │ │ Generator    │ │ Generator    │        │ │
+│  │  └──────────────┘ └──────────────┘ └──────────────┘ └──────────────┘        │ │
+│  └─────────────────────────────────────────────────────────────────────────────┘ │
+│                                ▼                                                  │
+│  ┌─────────────────────────────────────────────────────────────────────────────┐ │
+│  │                         Edge Intelligence Layer                              │ │
+│  │  ┌──────────────┐ ┌──────────────┐ ┌──────────────┐ ┌──────────────┐        │ │
+│  │  │ Signal       │ │ Forecasting  │ │ Balancing    │ │ Insights     │        │ │
+│  │  │ Correction   │ │ Engine       │ │ Engine       │ │ Engine       │        │ │
+│  │  │ ─────────────│ │ ─────────────│ │ ─────────────│ │ ─────────────│        │ │
+│  │  │ • SoC Fix    │ │ • Time2Empty │ │ • Imbalance  │ │ • Auto Find  │        │ │
+│  │  │ • SoE Calc   │ │ • Time2Full  │ │ • Cell Delta │ │ • Value Est  │        │ │
+│  │  │ • SoP Limits │ │ • Multi-Hrzn │ │ • Actions    │ │ • Priority   │        │ │
+│  │  │ • HSL/LSL    │ │ • Confidence │ │ • Recovery   │ │ • Recommend  │        │ │
+│  │  │ • Trust Score│ │              │ │              │ │              │        │ │
+│  │  └──────────────┘ └──────────────┘ └──────────────┘ └──────────────┘        │ │
+│  └─────────────────────────────────────────────────────────────────────────────┘ │
+│                                ▼                                                  │
+│  ┌─────────────────────────────────────────────────────────────────────────────┐ │
+│  │                         Storage Layer (DuckDB)                               │ │
+│  │  ┌────────────┐  ┌────────────┐  ┌────────────┐  ┌────────────┐             │ │
+│  │  │ Dimensions │  │ Facts      │  │ Edge Intel │  │ Gold Aggs  │             │ │
+│  │  │ • dim_site │  │ • telemetry│  │ • signals  │  │ • 15min    │             │ │
+│  │  │ • dim_asset│  │ • dispatch │  │ • forecasts│  │ • daily    │             │ │
+│  │  │ • dim_sla  │  │ • events   │  │ • imbalance│  │ • monthly  │             │ │
+│  │  │            │  │ • settle   │  │ • insights │  │            │             │ │
+│  │  └────────────┘  └────────────┘  └────────────┘  └────────────┘             │ │
+│  └─────────────────────────────────────────────────────────────────────────────┘ │
+│                                ▼                                                  │
+│  ┌─────────────────────────────────────────────────────────────────────────────┐ │
+│  │                         API Layer (FastAPI)                                  │ │
+│  │  /sites  /metrics  /edge/signals  /edge/forecasts  /edge/insights           │ │
+│  └─────────────────────────────────────────────────────────────────────────────┘ │
+│                                ▼                                                  │
+│  ┌─────────────────────────────────────────────────────────────────────────────┐ │
+│  │                         Dashboard Layer (Streamlit)                          │ │
+│  │  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────────────┐             │ │
+│  │  │ ENKA     │  │ TMEIC    │  │ Combined │  │ Edge Intelligence│             │ │
+│  │  │ (5 pages)│  │ (5 pages)│  │ (4 pages)│  │ (4 pages)        │             │ │
+│  │  └──────────┘  └──────────┘  └──────────┘  └──────────────────┘             │ │
+│  └─────────────────────────────────────────────────────────────────────────────┘ │
+│                                                                                   │
+└─────────────────────────────────────────────────────────────────────────────────┘
+```
+
+## Data Flow Diagram
+
+```
+                                    DATA FLOW
+                                    ─────────
+
+    ┌─────────────┐     ┌─────────────┐     ┌─────────────┐
+    │   BMS Raw   │     │ TMEIC PCS   │     │  Market     │
+    │   Signals   │     │  Telemetry  │     │  Prices     │
+    └──────┬──────┘     └──────┬──────┘     └──────┬──────┘
+           │                   │                   │
+           ▼                   ▼                   ▼
+    ┌────────────────────────────────────────────────────┐
+    │              fact_telemetry (2M+ rows)             │
+    │    p_kw, soc_pct, soh_pct, temp_c, voltage_v       │
+    └────────────────────────────────────────────────────┘
+           │
+           ├──────────────────────────────────────────────┐
+           │                                              │
+           ▼                                              ▼
+    ┌────────────────────┐                    ┌────────────────────┐
+    │  Signal Correction │                    │  Cell Telemetry    │
+    │      Engine        │                    │  (Rack Level)      │
+    └─────────┬──────────┘                    └─────────┬──────────┘
+              │                                         │
+              ▼                                         ▼
+    ┌────────────────────┐                    ┌────────────────────┐
+    │ fact_corrected_    │                    │   Balancing        │
+    │ signals            │                    │   Engine           │
+    │ ─────────────────  │                    └─────────┬──────────┘
+    │ • soc_corrected    │                              │
+    │ • soe_mwh          │                              ▼
+    │ • sop_charge/dis   │                    ┌────────────────────┐
+    │ • hsl/lsl limits   │                    │ fact_imbalance     │
+    │ • trust_score      │                    │ fact_balancing_    │
+    └─────────┬──────────┘                    │ actions            │
+              │                               └────────────────────┘
+              │
+              ├────────────────────┐
+              │                    │
+              ▼                    ▼
+    ┌────────────────────┐  ┌────────────────────┐
+    │  Forecasting       │  │  Insights          │
+    │  Engine            │  │  Engine            │
+    └─────────┬──────────┘  └─────────┬──────────┘
+              │                       │
+              ▼                       ▼
+    ┌────────────────────┐  ┌────────────────────┐
+    │ fact_forecasts     │  │ fact_insights_     │
+    │ ─────────────────  │  │ findings           │
+    │ • predicted_soc    │  │ ─────────────────  │
+    │ • time_to_empty    │  │ • category         │
+    │ • time_to_full     │  │ • severity         │
+    │ • available_energy │  │ • value_impact     │
+    │ • confidence       │  │ • recommendation   │
+    └────────────────────┘  └────────────────────┘
+              │                       │
+              └───────────┬───────────┘
+                          │
+                          ▼
+              ┌────────────────────────┐
+              │   Dashboard Views      │
+              │   API Endpoints        │
+              └────────────────────────┘
 ```
 
 ## Data Model
@@ -44,7 +183,7 @@ bess_analytics/
 - `dim_partner` - Revenue share partners
 - `dim_sla` - SLA definitions and thresholds
 
-### Facts
+### Core Facts
 - `fact_telemetry` - 1-minute time series (power, SOC, SOH, temperature, comms)
 - `fact_dispatch` - Dispatch commands and actuals
 - `fact_events` - Faults, trips, comms drops, maintenance
@@ -53,6 +192,15 @@ bess_analytics/
 - `fact_data_quality` - Hourly data completeness metrics
 - `forecast_revenue` - Revenue forecasts for loss attribution
 - `projects_pipeline` - Development pipeline (mock)
+
+### Edge Intelligence Facts
+- `fact_corrected_signals` - Corrected SoC/SoE/SoP with trust scores and HSL/LSL limits
+- `fact_constraints` - Active power/energy constraints with severity
+- `fact_cell_telemetry` - Cell-level voltage and temperature data
+- `fact_imbalance` - Rack imbalance scores and cell deltas
+- `fact_balancing_actions` - Recommended balancing actions with priority
+- `fact_forecasts` - Multi-horizon energy/power availability predictions
+- `fact_insights_findings` - Automated findings with value impact estimation
 
 ### Telemetry Tags
 
@@ -79,7 +227,7 @@ bess_analytics/
 ## Dashboard Catalog
 
 ### ENKA Dashboards
-1. **Portfolio Executive Cockpit** - CEO/CFO portfolio overview
+1. **Portfolio Executive Cockpit** - CEO/CFO portfolio overview (includes Signal Trust Score)
 2. **Partner Monetization & Revenue Share** - Partner payouts and SLA
 3. **RTM/Market Settlement Reconciliation** - Settlement verification
 4. **Lifecycle & Augmentation Planning** - Battery health and planning
@@ -97,6 +245,12 @@ bess_analytics/
 12. **Dispatch vs Asset Stress** - Degradation vs revenue tradeoff
 13. **SLA & Warranty Evidence Pack** - Compliance documentation
 14. **Portfolio Benchmarking by Vendor** - Vendor comparison
+
+### Edge Intelligence Dashboards
+15. **Signal Fidelity & SCADA Replacement** - Corrected signals, trust scores, raw vs corrected SoC, HSL/LSL bands
+16. **Predictive Energy & Power Availability** - Time-to-empty/full forecasts, multi-horizon predictions, constraints
+17. **Balancing & Imbalance Optimization** - Rack imbalance detection, cell deltas, balancing action queue
+18. **Insights Report & Recommendations** - Automated findings, value-at-risk, prioritized recommendations
 
 ## Quick Start
 
@@ -154,6 +308,7 @@ Dashboard available at: http://localhost:8501
 
 ## API Endpoints
 
+### Core Endpoints
 | Endpoint | Description |
 |----------|-------------|
 | `GET /sites` | List all sites |
@@ -170,6 +325,19 @@ Dashboard available at: http://localhost:8501
 | `GET /metrics/dispatch` | Dispatch commands |
 | `GET /metrics/vendor_benchmark` | Vendor comparison |
 | `GET /metrics/pipeline` | Project pipeline |
+
+### Edge Intelligence Endpoints
+| Endpoint | Description |
+|----------|-------------|
+| `GET /edge/corrected_signals` | Corrected signals with filters |
+| `GET /edge/latest_signals` | Latest corrected signal per site |
+| `GET /edge/signal_health` | Signal health summary by site |
+| `GET /edge/constraints` | Active power/energy constraints |
+| `GET /edge/forecasts` | Energy/power forecasts |
+| `GET /edge/imbalance` | Rack imbalance data |
+| `GET /edge/balancing_actions` | Recommended balancing actions |
+| `GET /edge/insights` | Automated findings |
+| `GET /edge/value_at_risk` | Total value at risk summary |
 
 ## Dashboard Header Component
 
@@ -221,6 +389,12 @@ Dashboard metadata is stored in `dashboard_catalog.yaml`. Each dashboard defines
 - Comms drops (random, site-specific rates)
 - Gradual SOH degradation
 
+### Edge Intelligence Data
+- **Corrected Signals**: 25,920 records (1-min resolution, 3 sites, 30 days)
+- **Forecasts**: 10,800 records (5 horizons × 3 sites × hourly)
+- **Imbalance**: 34,560 rack-level readings
+- **Insights**: ~30 automated findings with value impact
+
 ## Development
 
 ### Running Tests
@@ -253,6 +427,39 @@ pytest tests/
 - **Frontend**: Streamlit (Python dashboard framework)
 - **Charts**: Plotly (interactive visualizations)
 - **Data**: Pandas, PyArrow, NumPy
+
+## Edge Intelligence
+
+The Edge Intelligence module provides advanced battery analytics capabilities:
+
+### Signal Correction Engine
+Corrects BMS-reported State of Charge using cell-level analysis:
+- **SoC Correction**: Compares BMS SoC with cell voltage-derived estimates
+- **SoE (State of Energy)**: Usable energy in MWh within safety limits
+- **SoP (State of Power)**: Real-time charge/discharge limits
+- **HSL/LSL Bands**: Temperature-adjusted high/low safety limits
+- **Trust Score (0-100)**: Confidence in corrected values
+
+### Forecasting Engine
+Predicts energy availability at multiple time horizons:
+- **Time-to-Empty**: Minutes until minimum operational SoC
+- **Time-to-Full**: Minutes until maximum operational SoC
+- **Multi-Horizon**: 15, 30, 60, 120, 240 minute forecasts
+- **Confidence Scores**: Decreasing with longer horizons
+
+### Balancing Engine
+Detects and prioritizes cell/rack imbalances:
+- **Imbalance Score (0-100)**: Combined voltage and temperature delta analysis
+- **Cell Delta Detection**: Voltage >50mV warning, >100mV critical
+- **Temperature Delta**: >5°C warning, >10°C critical
+- **Action Queue**: Prioritized balancing recommendations with recovery estimates
+
+### Insights Engine
+Generates automated findings with value impact:
+- **Categories**: signal_quality, energy_availability, power_constraints, cell_imbalance, thermal
+- **Severity Levels**: critical, alert, warning, info
+- **Value Estimation**: Potential revenue impact in GBP
+- **Recommendations**: Actionable next steps
 
 ## License
 

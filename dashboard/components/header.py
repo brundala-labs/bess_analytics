@@ -29,37 +29,63 @@ def get_dashboard_config(dashboard_key: str) -> dict:
     return catalog.get("dashboards", {}).get(dashboard_key, {})
 
 
-def format_kpi_value(value: Any, format_type: str) -> str:
-    """Format KPI value based on its type."""
+def format_kpi_value(value: Any, format_type: str, suffix: str = "") -> str:
+    """Format KPI value based on its type. All numeric values rounded to 2 decimals."""
+    import math
+
+    # Handle None and NaN
     if value is None:
         return "N/A"
+    try:
+        if math.isnan(value):
+            return "N/A"
+    except (TypeError, ValueError):
+        pass
 
     if format_type == "currency":
         if abs(value) >= 1_000_000:
-            return f"£{value/1_000_000:.1f}M"
+            return f"£{value/1_000_000:.2f}M{suffix}"
         elif abs(value) >= 1_000:
-            return f"£{value/1_000:.1f}K"
+            return f"£{value/1_000:.2f}K{suffix}"
         else:
-            return f"£{value:.0f}"
+            return f"£{value:.2f}{suffix}"
     elif format_type == "percent":
-        return f"{value:.1f}%"
+        return f"{value:.2f}%{suffix}"
+    elif format_type == "percent_per_year":
+        return f"{value:.2f}%/yr{suffix}"
+    elif format_type == "percent_per_month":
+        return f"{value:.2f}%/mo{suffix}"
     elif format_type == "integer":
-        return f"{int(value):,}"
+        return f"{int(value):,}{suffix}"
     elif format_type == "number":
         if abs(value) >= 1_000_000:
-            return f"{value/1_000_000:.1f}M"
+            return f"{value/1_000_000:.2f}M{suffix}"
         elif abs(value) >= 1_000:
-            return f"{value/1_000:.1f}K"
+            return f"{value/1_000:.2f}K{suffix}"
         else:
-            return f"{value:.1f}"
+            return f"{value:.2f}{suffix}"
     elif format_type == "mwh":
-        return f"{value:,.0f} MWh"
+        return f"{value:.2f} MWh{suffix}"
     elif format_type == "mw":
-        return f"{value:,.0f} MW"
+        return f"{value:.2f} MW{suffix}"
+    elif format_type == "years":
+        return f"{value:.2f} yrs{suffix}"
+    elif format_type == "hours":
+        return f"{value:.2f} hrs{suffix}"
+    elif format_type == "days":
+        return f"{value:.2f} days{suffix}"
+    elif format_type == "ms":
+        return f"{value:.2f} ms{suffix}"
+    elif format_type == "score":
+        return f"{value:.2f}{suffix}"
+    elif format_type == "currency_per_mwh":
+        return f"£{value:.2f}/MWh{suffix}"
+    elif format_type == "status":
+        return f"{str(value)}{suffix}"
     elif format_type == "text":
-        return str(value)
+        return f"{str(value)}{suffix}"
     else:
-        return str(value)
+        return f"{str(value)}{suffix}"
 
 
 def render_header(
@@ -151,6 +177,66 @@ def render_kpi_tiles(kpis: list[dict], columns: int = None):
     if not kpis:
         return
 
+    # Add custom CSS for KPI styling - professional executive dashboard layout
+    st.markdown("""
+    <style>
+    /* KPI card container - professional card style with shadow */
+    [data-testid="metric-container"] {
+        background: linear-gradient(180deg, #ffffff 0%, #fafbfc 100%) !important;
+        border-radius: 12px !important;
+        padding: 1.2rem 1.5rem !important;
+        border: 1px solid #e8e8e8 !important;
+        border-left: 5px solid #81d742 !important;
+        min-width: 170px !important;
+        width: auto !important;
+        overflow: visible !important;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.04) !important;
+        transition: all 0.2s ease !important;
+    }
+    [data-testid="metric-container"]:hover {
+        box-shadow: 0 4px 16px rgba(0,0,0,0.08) !important;
+        transform: translateY(-1px) !important;
+    }
+    /* KPI label/title - bold, larger than value */
+    [data-testid="stMetricLabel"] {
+        font-size: 0.9rem !important;
+        font-weight: 700 !important;
+        white-space: nowrap !important;
+        overflow: visible !important;
+        color: #555 !important;
+        letter-spacing: 0.04em !important;
+        text-transform: uppercase !important;
+        margin-bottom: 0.4rem !important;
+    }
+    /* KPI value - regular weight, clear readable size, no truncation */
+    [data-testid="stMetricValue"] {
+        font-size: 1.4rem !important;
+        font-weight: 500 !important;
+        white-space: nowrap !important;
+        overflow: visible !important;
+        text-overflow: clip !important;
+        color: #1a1a1a !important;
+        line-height: 1.3 !important;
+    }
+    /* KPI delta styling */
+    [data-testid="stMetricDelta"] {
+        font-size: 0.8rem !important;
+        font-weight: 500 !important;
+        margin-top: 0.3rem !important;
+    }
+    /* Remove any text truncation in metric elements */
+    [data-testid="metric-container"] > div {
+        overflow: visible !important;
+    }
+    [data-testid="metric-container"] label,
+    [data-testid="metric-container"] div[data-testid="stMetricValue"] > div {
+        overflow: visible !important;
+        text-overflow: clip !important;
+        white-space: nowrap !important;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+
     num_cols = columns or min(len(kpis), 6)
     cols = st.columns(num_cols)
 
@@ -160,8 +246,9 @@ def render_kpi_tiles(kpis: list[dict], columns: int = None):
             value = kpi.get("value")
             delta = kpi.get("delta")
             format_type = kpi.get("format", "number")
+            suffix = kpi.get("suffix", "")
 
-            formatted_value = format_kpi_value(value, format_type)
+            formatted_value = format_kpi_value(value, format_type, suffix)
 
             # Handle delta formatting
             delta_str = None
@@ -169,9 +256,9 @@ def render_kpi_tiles(kpis: list[dict], columns: int = None):
                 if format_type == "currency":
                     delta_str = f"£{abs(delta):.0f}" if delta >= 0 else f"-£{abs(delta):.0f}"
                 elif format_type == "percent":
-                    delta_str = f"{delta:+.1f}%"
+                    delta_str = f"{delta:+.2f}%"
                 else:
-                    delta_str = f"{delta:+.1f}"
+                    delta_str = f"{delta:+.2f}"
 
             st.metric(
                 label=label,

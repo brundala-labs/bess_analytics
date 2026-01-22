@@ -43,6 +43,14 @@ def load_data(conn: Optional[duckdb.DuckDBPyConnection] = None) -> duckdb.DuckDB
         "fact_data_quality",
         "forecast_revenue",
         "projects_pipeline",
+        # Edge Intelligence tables
+        "fact_corrected_signals",
+        "fact_constraints",
+        "fact_cell_telemetry",
+        "fact_imbalance",
+        "fact_balancing_actions",
+        "fact_forecasts",
+        "fact_insights_findings",
     ]
 
     for table in tables:
@@ -328,7 +336,122 @@ def create_views(conn: duckdb.DuckDBPyConnection):
         GROUP BY sla.sla_id, sla.site_id, s.name, sla.metric_name, sla.threshold, sla.penalty_rate_per_hour
     """)
 
-    logger.info("Views created successfully")
+    # ============== Edge Intelligence Views ==============
+
+    # View: Latest corrected signals per site
+    conn.execute("""
+        CREATE OR REPLACE VIEW v_latest_corrected_signals AS
+        SELECT DISTINCT ON (site_id)
+            site_id, ts, soc_pct_raw, soc_pct_corrected, soe_mwh_corrected,
+            sop_charge_kw, sop_discharge_kw, hsl_soc_pct, lsl_soc_pct,
+            signal_trust_score, drift_detected, correction_applied
+        FROM fact_corrected_signals
+        ORDER BY site_id, ts DESC
+    """)
+
+    # View: Active constraints
+    conn.execute("""
+        CREATE OR REPLACE VIEW v_active_constraints AS
+        SELECT *
+        FROM fact_constraints
+        WHERE ts >= (SELECT MAX(ts) FROM fact_constraints) - INTERVAL '1 hour'
+        ORDER BY
+            CASE severity WHEN 'critical' THEN 1 WHEN 'high' THEN 2 WHEN 'medium' THEN 3 ELSE 4 END,
+            ts DESC
+    """)
+
+    # View: Imbalance summary by rack
+    conn.execute("""
+        CREATE OR REPLACE VIEW v_imbalance_summary AS
+        SELECT
+            site_id,
+            rack_id,
+            AVG(imbalance_score) as avg_imbalance_score,
+            MAX(imbalance_score) as max_imbalance_score,
+            AVG(max_cell_delta_mv) as avg_voltage_delta_mv,
+            AVG(max_temp_delta_c) as avg_temp_delta_c,
+            COUNT(CASE WHEN severity = 'critical' THEN 1 END) as critical_count,
+            COUNT(CASE WHEN severity = 'high' THEN 1 END) as high_count
+        FROM fact_imbalance
+        WHERE ts >= (SELECT MAX(ts) FROM fact_imbalance) - INTERVAL '7 days'
+        GROUP BY site_id, rack_id
+    """)
+
+    # View: Pending balancing actions
+    conn.execute("""
+        CREATE OR REPLACE VIEW v_pending_balancing_actions AS
+        SELECT *
+        FROM fact_balancing_actions
+        WHERE status = 'pending'
+        ORDER BY
+            CASE priority WHEN 'urgent' THEN 1 WHEN 'high' THEN 2 WHEN 'medium' THEN 3 ELSE 4 END,
+            ts DESC
+    """)
+
+    # View: Latest forecast summary per site
+    conn.execute("""
+        CREATE OR REPLACE VIEW v_forecast_summary AS
+        WITH latest AS (
+            SELECT
+                site_id,
+                MAX(ts) as latest_ts
+            FROM fact_forecasts
+            GROUP BY site_id
+        )
+        SELECT
+            f.site_id,
+            f.ts,
+            f.horizon_min,
+            f.predicted_soc_pct,
+            f.time_to_empty_min,
+            f.time_to_full_min,
+            f.confidence_pct,
+            f.available_energy_mwh
+        FROM fact_forecasts f
+        JOIN latest l ON f.site_id = l.site_id AND f.ts = l.latest_ts
+        WHERE f.horizon_min = 60
+    """)
+
+    # View: Active insights (unresolved)
+    conn.execute("""
+        CREATE OR REPLACE VIEW v_active_insights AS
+        SELECT *
+        FROM fact_insights_findings
+        WHERE resolved = false
+        ORDER BY
+            CASE severity WHEN 'critical' THEN 1 WHEN 'alert' THEN 2 WHEN 'warning' THEN 3 ELSE 4 END,
+            estimated_value_gbp DESC
+    """)
+
+    # View: Insights summary by category and severity
+    conn.execute("""
+        CREATE OR REPLACE VIEW v_insights_summary AS
+        SELECT
+            site_id,
+            severity,
+            category,
+            COUNT(*) as finding_count,
+            SUM(estimated_value_gbp) as total_value_impact
+        FROM fact_insights_findings
+        WHERE resolved = false
+        GROUP BY site_id, severity, category
+    """)
+
+    # View: Site signal health overview
+    conn.execute("""
+        CREATE OR REPLACE VIEW v_site_signal_health AS
+        SELECT
+            site_id,
+            AVG(signal_trust_score) as avg_trust_score,
+            SUM(CASE WHEN drift_detected THEN 1 ELSE 0 END) as drift_count,
+            SUM(CASE WHEN correction_applied THEN 1 ELSE 0 END) as correction_count,
+            AVG(ABS(soc_pct_corrected - soc_pct_raw)) as avg_soc_error
+        FROM fact_corrected_signals
+        WHERE ts >= (SELECT MAX(ts) FROM fact_corrected_signals) - INTERVAL '24 hours'
+        GROUP BY site_id
+    """)
+
+    logger.info("Views created successfully (including Edge Intelligence views)")
 
 
 def init_database() -> duckdb.DuckDBPyConnection:

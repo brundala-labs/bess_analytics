@@ -18,7 +18,7 @@ from dashboard.components.branding import apply_enka_theme, render_sidebar_brand
 from dashboard.components.header import get_dashboard_config, render_header, render_filter_bar
 from db.loader import get_connection
 
-st.set_page_config(page_title="RTM Settlement", page_icon="📑", layout="wide")
+st.set_page_config(initial_sidebar_state="expanded", page_title="RTM Settlement", page_icon="📑", layout="wide")
 
 # Apply ENKA branding
 apply_enka_theme()
@@ -108,13 +108,19 @@ def main():
 
     avg_price = settlements["avg_price_gbp_per_mwh"].mean() if not settlements.empty else 0
 
+    # Settled energy MTD
+    settled_energy = settlements[
+        settlements["date"] >= settlements["date"].max().replace(day=1)
+    ]["energy_mwh"].sum() if not settlements.empty else 0
+
+    # Dispatch variance (100 - compliance)
+    dispatch_variance = 100 - dispatch_accuracy if dispatch_accuracy else 0
+
     kpi_values = {
-        "settled_revenue_mtd": settled_mtd,
-        "unreconciled_amount": unreconciled,
-        "missing_intervals_count": missing_intervals,
-        "dispatch_accuracy_pct": dispatch_accuracy,
+        "settled_revenue_gbp": settled_mtd,
+        "settled_energy_mwh": settled_energy,
         "avg_price_gbp_mwh": avg_price,
-        "open_settlement_disputes": 3,  # Mock
+        "dispatch_variance_pct": dispatch_variance,
     }
 
     config = get_dashboard_config(DASHBOARD_KEY)

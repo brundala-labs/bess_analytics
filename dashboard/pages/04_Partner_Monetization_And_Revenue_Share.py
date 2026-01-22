@@ -18,7 +18,7 @@ from dashboard.components.branding import apply_enka_theme, render_sidebar_brand
 from dashboard.components.header import get_dashboard_config, render_header
 from db.loader import get_connection
 
-st.set_page_config(page_title="Partner Monetization", page_icon="💰", layout="wide")
+st.set_page_config(initial_sidebar_state="expanded", page_title="Partner Monetization", page_icon="💰", layout="wide")
 
 # Apply ENKA branding
 apply_enka_theme()
@@ -95,13 +95,14 @@ def main():
     compliance_rate = (sla_compliance["status"] == "COMPLIANT").mean() * 100 if not sla_compliance.empty else 0
     breaches = (sla_compliance["status"] == "BREACH").sum() if not sla_compliance.empty else 0
 
+    # Net revenue = gross - partner share
+    net_revenue = total_gross - total_share
+
     kpi_values = {
-        "partner_revenue_share_mtd": total_share,
-        "sla_compliance_pct": compliance_rate,
-        "pending_disputes": 2,  # Mock
+        "total_revenue_gbp": total_gross,
+        "partner_payout_gbp": total_share,
+        "net_revenue_gbp": net_revenue,
         "partner_count": len(partners),
-        "avg_revenue_share_pct": partners["revenue_share_pct"].mean() if not partners.empty else 0,
-        "ytd_partner_payouts": total_share * 3,  # Estimate
     }
 
     config = get_dashboard_config(DASHBOARD_KEY)

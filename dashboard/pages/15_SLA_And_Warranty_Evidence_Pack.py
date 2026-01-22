@@ -18,7 +18,7 @@ from dashboard.components.branding import apply_enka_theme, render_sidebar_brand
 from dashboard.components.header import get_dashboard_config, render_header, render_filter_bar
 from db.loader import get_connection
 
-st.set_page_config(page_title="SLA & Warranty Evidence", page_icon="📋", layout="wide")
+st.set_page_config(initial_sidebar_state="expanded", page_title="SLA & Warranty Evidence", page_icon="📋", layout="wide")
 
 # Apply ENKA branding
 apply_enka_theme()
@@ -192,7 +192,7 @@ def main():
                 return ""
 
             st.dataframe(
-                pivot.style.applymap(color_status),
+                pivot.style.map(color_status),
                 use_container_width=True,
             )
 
@@ -260,7 +260,7 @@ def main():
                     "duration_hours": "Hours",
                     "severity": "Severity",
                     "code": "Code"
-                }).style.applymap(severity_color, subset=["Severity"]).format({
+                }).style.map(severity_color, subset=["Severity"]).format({
                     "Hours": "{:.1f}"
                 }),
                 use_container_width=True,

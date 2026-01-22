@@ -19,7 +19,7 @@ from dashboard.components.branding import apply_enka_theme, render_sidebar_brand
 from dashboard.components.header import get_dashboard_config, render_header
 from db.loader import get_connection
 
-st.set_page_config(page_title="Development Pipeline", page_icon="🏗️", layout="wide")
+st.set_page_config(initial_sidebar_state="expanded", page_title="Development Pipeline", page_icon="🏗️", layout="wide")
 
 # Apply ENKA branding
 apply_enka_theme()
@@ -59,13 +59,21 @@ def main():
     # Pipeline value estimate (£2M per MW for BESS)
     pipeline_value = total_mw * 2_000_000
 
+    # Count projects in construction stage
+    in_construction = len(pipeline[pipeline["stage"] == "Construction"])
+
+    # Expected COD in next 12 months
+    cutoff_12m = datetime.now() + pd.DateOffset(months=12)
+    cod_next_12m = len(pipeline[pipeline["expected_cod"] <= cutoff_12m])
+
+    # Total MWh capacity
+    total_mwh = pipeline["mwh_capacity"].sum() if "mwh_capacity" in pipeline.columns else total_mw * 2
+
     kpi_values = {
-        "projects_in_flight": in_flight,
-        "mw_under_development": total_mw,
-        "on_schedule_count": int(on_schedule),
-        "delayed_projects": int(delayed),
-        "next_8month_capacity_mw": next_8mo,
-        "pipeline_value_gbp": pipeline_value,
+        "pipeline_mw": total_mw,
+        "pipeline_mwh": total_mwh,
+        "projects_in_construction": in_construction,
+        "expected_cod_next_12m": cod_next_12m,
     }
 
     config = get_dashboard_config(DASHBOARD_KEY)
@@ -227,7 +235,7 @@ def main():
             "vendor": "Vendor",
             "status": "Status",
             "completion_pct": "Complete %"
-        }).style.applymap(color_status, subset=["Status"]),
+        }).style.map(color_status, subset=["Status"]),
         use_container_width=True,
         height=250,
     )
