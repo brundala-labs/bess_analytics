@@ -142,7 +142,6 @@ flowchart TB
 """
 render_mermaid(cloud_diagram, height=1100)
 
-st.markdown("")
 col1, col2 = st.columns(2)
 with col1:
     st.markdown("**Key Components:**")
@@ -197,7 +196,6 @@ flowchart LR
 """
 render_mermaid(medallion_diagram, height=550)
 
-st.markdown("")
 col1, col2, col3, col4 = st.columns(4)
 with col1:
     with st.container(border=True):
@@ -274,9 +272,8 @@ erDiagram
         float value_gbp
     }
 """
-render_mermaid(data_model_diagram, height=850)
+render_mermaid(data_model_diagram, height=400)
 
-st.markdown("")
 st.markdown("""
 **Star Schema Design:**
 - **Dimensions**: Site, Asset, Service, Partner, SLA
@@ -326,9 +323,8 @@ flowchart LR
     TTE --> FIND
     FIND --> VALUE
 """
-render_mermaid(edge_diagram, height=500)
+render_mermaid(edge_diagram, height=350)
 
-st.markdown("")
 col1, col2, col3, col4 = st.columns(4)
 with col1:
     with st.container(border=True):

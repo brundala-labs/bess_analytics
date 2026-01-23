@@ -227,6 +227,7 @@ def render_sidebar_branding():
             padding-left: 2rem !important;
             padding-right: 2rem !important;
             padding-top: 0 !important;
+            margin-top: -4rem !important;
             max-width: 100% !important;
             background: #f8f9fa !important;
         }}
@@ -333,27 +334,35 @@ def render_sidebar_branding():
     </style>
     """, unsafe_allow_html=True)
 
-    # Dashboard structure - simplified for dropdowns
-    all_dashboards = [
-        ("-- Navigate to Dashboard --", None),
-        ("─── ENKA Pack ───", None),
+    # Dashboard structure - separate lists for each pack
+    enka_dashboards = [
+        ("ENKA Reports", None),
         ("Portfolio Cockpit", "03_Portfolio_Executive_Cockpit"),
         ("Partner Monetization", "04_Partner_Monetization_And_Revenue_Share"),
         ("RTM Settlement", "05_RTM_Settlement_Reconciliation"),
         ("Lifecycle Planning", "06_Lifecycle_And_Augmentation_Planning"),
         ("Dev Pipeline", "07_Development_Pipeline_Tracking"),
-        ("─── TMEIC Pack ───", None),
+    ]
+
+    tmeic_dashboards = [
+        ("TMEIC Reports", None),
         ("PCS Real Time", "08_PCS_Controller_Real_Time_Operations"),
         ("Controller Health", "09_Controller_Health_And_Communications"),
         ("Faults & Trips", "10_Faults_And_Trips_Timeline"),
         ("Grid Performance", "11_Grid_Performance_And_Compliance"),
         ("Historian", "12_Historian_Explorer"),
-        ("─── Combined Pack ───", None),
+    ]
+
+    combined_dashboards = [
+        ("Combined Reports", None),
         ("Revenue Loss", "13_Revenue_Loss_Attribution"),
         ("Dispatch vs Stress", "14_Dispatch_Versus_Asset_Stress"),
         ("SLA & Warranty", "15_SLA_And_Warranty_Evidence_Pack"),
         ("Benchmarking", "16_Portfolio_Benchmarking_By_Vendor_And_Site"),
-        ("─── Edge Intelligence ───", None),
+    ]
+
+    edge_dashboards = [
+        ("Edge Intelligence", None),
         ("Signal Fidelity", "17_Signal_Fidelity_And_SCADA_Replacement"),
         ("Energy Forecasts", "18_Predictive_Energy_And_Power_Availability"),
         ("Balancing", "19_Balancing_And_Imbalance_Optimization"),
@@ -364,7 +373,7 @@ def render_sidebar_branding():
     st.markdown(f'''
         <div style="
             background: linear-gradient(180deg, {ENKA_WHITE} 0%, #f8f9fa 100%);
-            margin: -1rem -2rem 0 -2rem;
+            margin: -6rem -2rem 0 -2rem;
             padding: 1.2rem 2rem 1rem 2rem;
             text-align: center;
             border-bottom: 1px solid #e0e0e0;
@@ -384,30 +393,85 @@ def render_sidebar_branding():
     # Top navigation bar (below the title)
     st.markdown('<div class="nav-container">', unsafe_allow_html=True)
 
-    nav_cols = st.columns([3, 4, 3])
+    nav_cols = st.columns([2, 2, 2, 2, 2])
 
     with nav_cols[0]:
         with st.container():
             st.markdown('<div class="nav-home">', unsafe_allow_html=True)
-            if st.button("⚡ BESS Analytics Architecture Overview", key="nav_home_btn", use_container_width=True):
+            if st.button("⚡ Architecture", key="nav_home_btn", use_container_width=True):
                 st.switch_page("Home.py")
             st.markdown('</div>', unsafe_allow_html=True)
 
+    # ENKA Pack dropdown
     with nav_cols[1]:
         with st.container():
             st.markdown('<div class="nav-select">', unsafe_allow_html=True)
-            options = [d[0] for d in all_dashboards]
-            page_map = {d[0]: d[1] for d in all_dashboards}
+            enka_options = [d[0] for d in enka_dashboards]
+            enka_page_map = {d[0]: d[1] for d in enka_dashboards}
 
-            selected = st.selectbox(
-                "Dashboard",
-                options,
-                key="nav_dashboard_select",
+            enka_selected = st.selectbox(
+                "ENKA Pack",
+                enka_options,
+                key="nav_enka_select",
                 label_visibility="collapsed"
             )
 
-            if selected and page_map.get(selected):
-                st.switch_page(f"pages/{page_map[selected]}.py")
+            if enka_selected and enka_page_map.get(enka_selected):
+                st.switch_page(f"pages/{enka_page_map[enka_selected]}.py")
+            st.markdown('</div>', unsafe_allow_html=True)
+
+    # TMEIC Pack dropdown
+    with nav_cols[2]:
+        with st.container():
+            st.markdown('<div class="nav-select">', unsafe_allow_html=True)
+            tmeic_options = [d[0] for d in tmeic_dashboards]
+            tmeic_page_map = {d[0]: d[1] for d in tmeic_dashboards}
+
+            tmeic_selected = st.selectbox(
+                "TMEIC Pack",
+                tmeic_options,
+                key="nav_tmeic_select",
+                label_visibility="collapsed"
+            )
+
+            if tmeic_selected and tmeic_page_map.get(tmeic_selected):
+                st.switch_page(f"pages/{tmeic_page_map[tmeic_selected]}.py")
+            st.markdown('</div>', unsafe_allow_html=True)
+
+    # Combined Pack dropdown
+    with nav_cols[3]:
+        with st.container():
+            st.markdown('<div class="nav-select">', unsafe_allow_html=True)
+            combined_options = [d[0] for d in combined_dashboards]
+            combined_page_map = {d[0]: d[1] for d in combined_dashboards}
+
+            combined_selected = st.selectbox(
+                "Combined Pack",
+                combined_options,
+                key="nav_combined_select",
+                label_visibility="collapsed"
+            )
+
+            if combined_selected and combined_page_map.get(combined_selected):
+                st.switch_page(f"pages/{combined_page_map[combined_selected]}.py")
+            st.markdown('</div>', unsafe_allow_html=True)
+
+    # Edge Intelligence dropdown
+    with nav_cols[4]:
+        with st.container():
+            st.markdown('<div class="nav-select">', unsafe_allow_html=True)
+            edge_options = [d[0] for d in edge_dashboards]
+            edge_page_map = {d[0]: d[1] for d in edge_dashboards}
+
+            edge_selected = st.selectbox(
+                "Edge Intelligence",
+                edge_options,
+                key="nav_edge_select",
+                label_visibility="collapsed"
+            )
+
+            if edge_selected and edge_page_map.get(edge_selected):
+                st.switch_page(f"pages/{edge_page_map[edge_selected]}.py")
             st.markdown('</div>', unsafe_allow_html=True)
 
     st.markdown('</div>', unsafe_allow_html=True)
