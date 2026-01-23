@@ -140,7 +140,7 @@ flowchart TB
     GOLD --> API
     API --> BI
 """
-render_mermaid(cloud_diagram, height=1100)
+render_mermaid(cloud_diagram, height=1400)
 
 col1, col2 = st.columns(2)
 with col1:
