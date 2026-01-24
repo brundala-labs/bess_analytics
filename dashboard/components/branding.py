@@ -203,7 +203,7 @@ def apply_enka_theme():
     """, unsafe_allow_html=True)
 
 
-def render_sidebar_branding(current_page: str = None):
+def render_sidebar_branding(current_page=None):
     """Render top navigation menu instead of sidebar for full-width layout.
 
     Args:
@@ -405,6 +405,14 @@ def render_sidebar_branding(current_page: str = None):
         </div>
     ''', unsafe_allow_html=True)
 
+    # Helper to find index of current page in a dashboard list
+    def get_current_index(dashboards, page_name):
+        if page_name:
+            for i, (label, page) in enumerate(dashboards):
+                if page == page_name:
+                    return i
+        return 0
+
     # Top navigation bar (below the title)
     st.markdown('<div class="nav-container">', unsafe_allow_html=True)
 
@@ -416,14 +424,6 @@ def render_sidebar_branding(current_page: str = None):
             if st.button("⚡ Architecture", key="nav_home_btn", use_container_width=True):
                 st.switch_page("Home.py")
             st.markdown('</div>', unsafe_allow_html=True)
-
-    # Helper to find index of current page in a dashboard list
-    def get_current_index(dashboards, current_page):
-        if current_page:
-            for i, (label, page) in enumerate(dashboards):
-                if page == current_page:
-                    return i
-        return 0
 
     # ENKA Pack dropdown
     with nav_cols[1]:
