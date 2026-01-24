@@ -22,7 +22,7 @@ st.set_page_config(initial_sidebar_state="expanded", page_title="Controller Heal
 
 # Apply ENKA branding
 apply_enka_theme()
-render_sidebar_branding()
+render_sidebar_branding("09_Controller_Health_And_Communications")
 
 
 DASHBOARD_KEY = "tmeic_controller_health"

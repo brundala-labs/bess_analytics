@@ -22,7 +22,7 @@ st.set_page_config(initial_sidebar_state="expanded", page_title="Lifecycle & Aug
 
 # Apply ENKA branding
 apply_enka_theme()
-render_sidebar_branding()
+render_sidebar_branding("06_Lifecycle_And_Augmentation_Planning")
 
 
 DASHBOARD_KEY = "enka_lifecycle_augmentation"

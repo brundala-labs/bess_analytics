@@ -35,7 +35,7 @@ st.set_page_config(initial_sidebar_state="expanded",
 )
 
 apply_enka_theme()
-render_sidebar_branding()
+render_sidebar_branding("20_Insights_Report_And_Recommendations")
 
 
 @st.cache_data(ttl=300)

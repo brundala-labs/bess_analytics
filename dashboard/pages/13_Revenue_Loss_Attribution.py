@@ -23,7 +23,7 @@ st.set_page_config(initial_sidebar_state="expanded", page_title="Revenue Loss At
 
 # Apply ENKA branding
 apply_enka_theme()
-render_sidebar_branding()
+render_sidebar_branding("13_Revenue_Loss_Attribution")
 
 
 DASHBOARD_KEY = "combined_revenue_loss"

@@ -22,7 +22,7 @@ st.set_page_config(initial_sidebar_state="expanded", page_title="PCS Real-time O
 
 # Apply ENKA branding
 apply_enka_theme()
-render_sidebar_branding()
+render_sidebar_branding("08_PCS_Controller_Real_Time_Operations")
 
 
 DASHBOARD_KEY = "tmeic_realtime_ops"

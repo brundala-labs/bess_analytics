@@ -22,7 +22,7 @@ st.set_page_config(initial_sidebar_state="expanded", page_title="Vendor Benchmar
 
 # Apply ENKA branding
 apply_enka_theme()
-render_sidebar_branding()
+render_sidebar_branding("16_Portfolio_Benchmarking_By_Vendor_And_Site")
 
 
 DASHBOARD_KEY = "combined_vendor_benchmarking"

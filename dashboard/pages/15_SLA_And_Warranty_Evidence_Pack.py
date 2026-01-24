@@ -22,7 +22,7 @@ st.set_page_config(initial_sidebar_state="expanded", page_title="SLA & Warranty 
 
 # Apply ENKA branding
 apply_enka_theme()
-render_sidebar_branding()
+render_sidebar_branding("15_SLA_And_Warranty_Evidence_Pack")
 
 
 DASHBOARD_KEY = "combined_sla_warranty"

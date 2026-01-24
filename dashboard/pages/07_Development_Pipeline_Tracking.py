@@ -23,7 +23,7 @@ st.set_page_config(initial_sidebar_state="expanded", page_title="Development Pip
 
 # Apply ENKA branding
 apply_enka_theme()
-render_sidebar_branding()
+render_sidebar_branding("07_Development_Pipeline_Tracking")
 
 
 DASHBOARD_KEY = "enka_development_pipeline"

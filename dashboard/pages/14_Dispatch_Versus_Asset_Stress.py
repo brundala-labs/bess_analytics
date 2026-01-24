@@ -23,7 +23,7 @@ st.set_page_config(initial_sidebar_state="expanded", page_title="Dispatch vs Ass
 
 # Apply ENKA branding
 apply_enka_theme()
-render_sidebar_branding()
+render_sidebar_branding("14_Dispatch_Versus_Asset_Stress")
 
 
 DASHBOARD_KEY = "combined_dispatch_stress"

@@ -203,8 +203,12 @@ def apply_enka_theme():
     """, unsafe_allow_html=True)
 
 
-def render_sidebar_branding():
-    """Render top navigation menu instead of sidebar for full-width layout."""
+def render_sidebar_branding(current_page: str = None):
+    """Render top navigation menu instead of sidebar for full-width layout.
+
+    Args:
+        current_page: The current page file name (e.g., "03_Portfolio_Executive_Cockpit")
+    """
     # Hide sidebar completely and style for full-width professional look
     st.markdown(f"""
     <style>
@@ -262,6 +266,17 @@ def render_sidebar_branding():
 
         .nav-select [data-baseweb="select"] span {{
             color: {ENKA_WHITE} !important;
+        }}
+
+        /* Highlight selected report dropdown with green background */
+        .nav-select-active div[data-baseweb="select"] > div {{
+            background-color: {ENKA_GREEN} !important;
+            border: 2px solid {ENKA_GREEN} !important;
+        }}
+
+        .nav-select-active [data-baseweb="select"] span {{
+            color: {ENKA_DARK} !important;
+            font-weight: 700 !important;
         }}
 
         /* Home/Architecture button - professional gradient */
@@ -402,75 +417,95 @@ def render_sidebar_branding():
                 st.switch_page("Home.py")
             st.markdown('</div>', unsafe_allow_html=True)
 
+    # Helper to find index of current page in a dashboard list
+    def get_current_index(dashboards, current_page):
+        if current_page:
+            for i, (label, page) in enumerate(dashboards):
+                if page == current_page:
+                    return i
+        return 0
+
     # ENKA Pack dropdown
     with nav_cols[1]:
         with st.container():
-            st.markdown('<div class="nav-select">', unsafe_allow_html=True)
             enka_options = [d[0] for d in enka_dashboards]
             enka_page_map = {d[0]: d[1] for d in enka_dashboards}
+            enka_index = get_current_index(enka_dashboards, current_page)
+            enka_class = "nav-select-active" if enka_index > 0 else "nav-select"
 
+            st.markdown(f'<div class="{enka_class}">', unsafe_allow_html=True)
             enka_selected = st.selectbox(
                 "ENKA Pack",
                 enka_options,
+                index=enka_index,
                 key="nav_enka_select",
                 label_visibility="collapsed"
             )
 
-            if enka_selected and enka_page_map.get(enka_selected):
+            if enka_selected and enka_page_map.get(enka_selected) and enka_page_map.get(enka_selected) != current_page:
                 st.switch_page(f"pages/{enka_page_map[enka_selected]}.py")
             st.markdown('</div>', unsafe_allow_html=True)
 
     # TMEIC Pack dropdown
     with nav_cols[2]:
         with st.container():
-            st.markdown('<div class="nav-select">', unsafe_allow_html=True)
             tmeic_options = [d[0] for d in tmeic_dashboards]
             tmeic_page_map = {d[0]: d[1] for d in tmeic_dashboards}
+            tmeic_index = get_current_index(tmeic_dashboards, current_page)
+            tmeic_class = "nav-select-active" if tmeic_index > 0 else "nav-select"
 
+            st.markdown(f'<div class="{tmeic_class}">', unsafe_allow_html=True)
             tmeic_selected = st.selectbox(
                 "TMEIC Pack",
                 tmeic_options,
+                index=tmeic_index,
                 key="nav_tmeic_select",
                 label_visibility="collapsed"
             )
 
-            if tmeic_selected and tmeic_page_map.get(tmeic_selected):
+            if tmeic_selected and tmeic_page_map.get(tmeic_selected) and tmeic_page_map.get(tmeic_selected) != current_page:
                 st.switch_page(f"pages/{tmeic_page_map[tmeic_selected]}.py")
             st.markdown('</div>', unsafe_allow_html=True)
 
     # Combined Pack dropdown
     with nav_cols[3]:
         with st.container():
-            st.markdown('<div class="nav-select">', unsafe_allow_html=True)
             combined_options = [d[0] for d in combined_dashboards]
             combined_page_map = {d[0]: d[1] for d in combined_dashboards}
+            combined_index = get_current_index(combined_dashboards, current_page)
+            combined_class = "nav-select-active" if combined_index > 0 else "nav-select"
 
+            st.markdown(f'<div class="{combined_class}">', unsafe_allow_html=True)
             combined_selected = st.selectbox(
                 "Combined Pack",
                 combined_options,
+                index=combined_index,
                 key="nav_combined_select",
                 label_visibility="collapsed"
             )
 
-            if combined_selected and combined_page_map.get(combined_selected):
+            if combined_selected and combined_page_map.get(combined_selected) and combined_page_map.get(combined_selected) != current_page:
                 st.switch_page(f"pages/{combined_page_map[combined_selected]}.py")
             st.markdown('</div>', unsafe_allow_html=True)
 
     # Edge Intelligence dropdown
     with nav_cols[4]:
         with st.container():
-            st.markdown('<div class="nav-select">', unsafe_allow_html=True)
             edge_options = [d[0] for d in edge_dashboards]
             edge_page_map = {d[0]: d[1] for d in edge_dashboards}
+            edge_index = get_current_index(edge_dashboards, current_page)
+            edge_class = "nav-select-active" if edge_index > 0 else "nav-select"
 
+            st.markdown(f'<div class="{edge_class}">', unsafe_allow_html=True)
             edge_selected = st.selectbox(
                 "Edge Intelligence",
                 edge_options,
+                index=edge_index,
                 key="nav_edge_select",
                 label_visibility="collapsed"
             )
 
-            if edge_selected and edge_page_map.get(edge_selected):
+            if edge_selected and edge_page_map.get(edge_selected) and edge_page_map.get(edge_selected) != current_page:
                 st.switch_page(f"pages/{edge_page_map[edge_selected]}.py")
             st.markdown('</div>', unsafe_allow_html=True)
 

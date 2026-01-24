@@ -35,7 +35,7 @@ st.set_page_config(initial_sidebar_state="expanded",
 )
 
 apply_enka_theme()
-render_sidebar_branding()
+render_sidebar_branding("17_Signal_Fidelity_And_SCADA_Replacement")
 
 
 @st.cache_data(ttl=300)

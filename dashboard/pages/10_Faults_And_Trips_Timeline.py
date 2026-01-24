@@ -22,7 +22,7 @@ st.set_page_config(initial_sidebar_state="expanded", page_title="Faults Timeline
 
 # Apply ENKA branding
 apply_enka_theme()
-render_sidebar_branding()
+render_sidebar_branding("10_Faults_And_Trips_Timeline")
 
 
 DASHBOARD_KEY = "tmeic_faults_timeline"

@@ -29,7 +29,7 @@ st.set_page_config(initial_sidebar_state="expanded", page_title="Portfolio Execu
 
 # Apply ENKA branding
 apply_enka_theme()
-render_sidebar_branding()
+render_sidebar_branding("03_Portfolio_Executive_Cockpit")
 
 
 DASHBOARD_KEY = "enka_portfolio_executive"

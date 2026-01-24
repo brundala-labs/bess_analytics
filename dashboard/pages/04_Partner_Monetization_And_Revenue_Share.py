@@ -22,7 +22,7 @@ st.set_page_config(initial_sidebar_state="expanded", page_title="Partner Monetiz
 
 # Apply ENKA branding
 apply_enka_theme()
-render_sidebar_branding()
+render_sidebar_branding("04_Partner_Monetization_And_Revenue_Share")
 
 
 DASHBOARD_KEY = "enka_partner_monetization"

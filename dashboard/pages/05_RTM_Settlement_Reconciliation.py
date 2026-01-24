@@ -22,7 +22,7 @@ st.set_page_config(initial_sidebar_state="expanded", page_title="RTM Settlement"
 
 # Apply ENKA branding
 apply_enka_theme()
-render_sidebar_branding()
+render_sidebar_branding("05_RTM_Settlement_Reconciliation")
 
 
 DASHBOARD_KEY = "enka_rtm_settlement"

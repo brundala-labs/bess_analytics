@@ -23,7 +23,7 @@ st.set_page_config(initial_sidebar_state="expanded", page_title="Grid Code Perfo
 
 # Apply ENKA branding
 apply_enka_theme()
-render_sidebar_branding()
+render_sidebar_branding("11_Grid_Performance_And_Compliance")
 
 
 DASHBOARD_KEY = "tmeic_grid_code"

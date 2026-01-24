@@ -35,7 +35,7 @@ st.set_page_config(initial_sidebar_state="expanded",
 )
 
 apply_enka_theme()
-render_sidebar_branding()
+render_sidebar_branding("19_Balancing_And_Imbalance_Optimization")
 
 
 @st.cache_data(ttl=300)

@@ -23,7 +23,7 @@ st.set_page_config(initial_sidebar_state="expanded", page_title="Historian Explo
 
 # Apply ENKA branding
 apply_enka_theme()
-render_sidebar_branding()
+render_sidebar_branding("12_Historian_Explorer")
 
 
 DASHBOARD_KEY = "tmeic_historian"

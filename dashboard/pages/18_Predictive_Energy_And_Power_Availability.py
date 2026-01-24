@@ -35,7 +35,7 @@ st.set_page_config(initial_sidebar_state="expanded",
 )
 
 apply_enka_theme()
-render_sidebar_branding()
+render_sidebar_branding("18_Predictive_Energy_And_Power_Availability")
 
 
 @st.cache_data(ttl=300)
